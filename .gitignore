@@ -1,5 +1,3 @@
-# .gitignore
-
 # Виртуальное окружение
 venv/
 env/
@@ -42,6 +40,52 @@ ml/models/*.h5
 ml/models/*.pth
 !ml/models/.gitkeep
 
+# NLP модуль
+ml/nlp/models/**
+!ml/nlp/models/.gitkeep
+ml/nlp/data/datasets/*.json
+ml/nlp/data/datasets/*.csv
+ml/nlp/data/datasets/*.parquet
+!ml/nlp/data/datasets/.gitkeep
+ml/nlp/data/embeddings/*.npy
+ml/nlp/data/embeddings/*.pt
+!ml/nlp/data/embeddings/.gitkeep
+ml/nlp/experiments/
+ml/nlp/results/
+ml/nlp/logs/
+
+# Кеш моделей HuggingFace
+.huggingface/
+.cache/huggingface/
+~/.cache/huggingface/
+
+# Label Studio
+label_studio_data/
+label_studio_media/
+*.label_studio
+
+# Дампы базы данных
+*.sql
+*.sqlite3
+*.dump
+
+# Временные файлы
+*.tmp
+*.temp
+*.pickle
+*.joblib
+*.bin
+*.msgpack
+
+# Логи
+*.log
+
+# Конфиденциальные данные
+config/local.py
+.env
+*.env
+secrets.py
+
 # IDE
 .vscode/
 .idea/
@@ -54,7 +98,3 @@ Thumbs.db
 
 # Jupyter
 .ipynb_checkpoints/
-
-# Временные файлы
-*.tmp
-*.temp
