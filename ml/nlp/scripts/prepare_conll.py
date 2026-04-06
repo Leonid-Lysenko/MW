@@ -3,8 +3,8 @@ import json
 import os
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-INPUT_PATH = os.path.join(BASE_DIR, '..', 'data', 'datasets', 'labelstudio_ready.json')
-OUTPUT_PATH = os.path.join(BASE_DIR, '..', 'data', 'datasets', 'train.conll')
+INPUT_PATH = os.path.join(BASE_DIR, '..', 'data', 'datasets', 'dataset_from_ls_74.json')
+OUTPUT_PATH = os.path.join(BASE_DIR, '..', 'data', 'datasets', 'dataset_from_ls_74_final.conll')
 
 with open(INPUT_PATH, 'r', encoding='utf-8') as f:
     tasks = json.load(f)
