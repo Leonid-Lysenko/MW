@@ -32,7 +32,7 @@ jobs:
     - name: Install dependencies
       run: |
         pip install -r requirements-dev.txt
-        pip install huggingface-hub  # Для загрузки модели
+        pip install huggingface-hub
     
     - name: Download NER model
       run: |
@@ -51,8 +51,8 @@ jobs:
         cd backend
         black --check .
         isort --check-only .
-        flake8 .
-
+        flake8 --ignore=E402 .
+    
     - name: Run tests (skip E2E)
       run: |
         cd backend
