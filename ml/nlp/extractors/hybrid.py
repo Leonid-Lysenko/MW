@@ -9,7 +9,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from .base import SymptomExtractor
 from .rule_based import RuleBasedExtractor
 from .semantic_search import SemanticSearchExtractor
-from .ner_rubio_finetuned import RuBioRobertaNERExtractor
+# from .ner_rubio_finetuned import RuBioRobertaNERExtractor  # <-- ЗАКОММЕНТИРОВАНО
 
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
 sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
@@ -20,15 +20,15 @@ def _load_rule_based(synonyms_path: str):
     return RuleBasedExtractor(synonyms_path=synonyms_path)
 
 
-def _load_ner(model_path: str, synonyms_path: str):
-    """Загрузка NER модуля."""
-    return RuBioRobertaNERExtractor(model_path, synonyms_path)
+# def _load_ner(model_path: str, synonyms_path: str):  # <-- ЗАКОММЕНТИРОВАНО
+#     """Загрузка NER модуля."""
+#     return RuBioRobertaNERExtractor(model_path, synonyms_path)
 
 
 def _load_semantic(threshold: float):
     """Загрузка семантического модуля."""
     return SemanticSearchExtractor(
-        model_name='e5-large',
+        model_name='intfloat/multilingual-e5-small',  # <-- ИЗМЕНЕНО с e5-large на e5-small
         confidence_threshold=threshold
     )
 
@@ -68,26 +68,26 @@ class HybridExtractor(SymptomExtractor):
         
         # Параллельная загрузка трёх компонентов
         self.rule = None
-        self.ner = None
+        self.ner = None  # <-- ОСТАВЛЕН, НО БУДЕТ None
         self.semantic = None
         
-        with ThreadPoolExecutor(max_workers=3) as executor:
+        with ThreadPoolExecutor(max_workers=2) as executor:  # <-- ИЗМЕНЕНО с 3 на 2
             # Запускаем задачи параллельно
             future_rule = executor.submit(_load_rule_based, rule_based_synonyms_path)
-            future_ner = executor.submit(_load_ner, ner_model_path, rule_based_synonyms_path)
+            # future_ner = executor.submit(_load_ner, ner_model_path, rule_based_synonyms_path)  # <-- ЗАКОММЕНТИРОВАНО
             future_semantic = executor.submit(_load_semantic, semantic_threshold_rare)
             
             # Собираем результаты по мере завершения
-            for future in as_completed([future_rule, future_ner, future_semantic]):
+            for future in as_completed([future_rule, future_semantic]):  # <-- УБРАН future_ner
                 try:
                     result = future.result()
                     # Определяем, какой компонент загрузился
                     if isinstance(result, RuleBasedExtractor):
                         self.rule = result
                         print(" Rule-based загружен")
-                    elif isinstance(result, RuBioRobertaNERExtractor):
-                        self.ner = result
-                        print(" NER загружен")
+                    # elif isinstance(result, RuBioRobertaNERExtractor):  # <-- ЗАКОММЕНТИРОВАНО
+                    #     self.ner = result
+                    #     print(" NER загружен")
                     elif isinstance(result, SemanticSearchExtractor):
                         self.semantic = result
                         print(" Семантический поиск загружен")
@@ -95,7 +95,8 @@ class HybridExtractor(SymptomExtractor):
                     print(f" Ошибка загрузки компонента: {e}")
         
         # Проверяем, что все компоненты загружены
-        if self.rule is None or self.ner is None or self.semantic is None:
+        # if self.rule is None or self.ner is None or self.semantic is None:  # <-- СТАРОЕ
+        if self.rule is None or self.semantic is None:  # <-- ИЗМЕНЕНО (убрана проверка NER)
             raise RuntimeError("Не удалось загрузить все компоненты гибридного экстрактора")
         
         self.semantic_threshold_common = semantic_threshold_common
@@ -184,7 +185,8 @@ class HybridExtractor(SymptomExtractor):
         
         # Шаг 1: Получаем результаты
         rule_results = self.rule.extract(text)
-        ner_results = self.ner.extract(text)
+        # ner_results = self.ner.extract(text) if self.ner else []  # <-- ЗАКОММЕНТИРОВАНО
+        ner_results = []  # <-- ДОБАВЛЕНО (заглушка вместо NER)
         semantic_results = self.semantic.extract(text, top_k=10)
         
         added_symptoms: Set[str] = set()
@@ -204,33 +206,33 @@ class HybridExtractor(SymptomExtractor):
             })
             added_symptoms.add(norm_name)
         
-        # Шаг 3: NER (только для частотных симптомов из топ-74)
-        for symptom in ner_results:
-            name = symptom['canonical_name']
-            norm_name = self._normalize_name(name)
-            
-            if norm_name in added_symptoms:
-                continue
-            
-            if not self._is_symptom_in_top74(symptom['symptom_id']):
-                continue
-            
-            if symptom['confidence'] < self.ner_confidence_threshold:
-                continue
-            
-            if not self._is_symptom_in_text(text, name):
-                continue
-            
-            status = self._check_negation_with_rule(text, name)
-            
-            hybrid_results.append({
-                'symptom_id': symptom['symptom_id'],
-                'canonical_name': name,
-                'status': status,
-                'confidence': symptom['confidence'],
-                'source': 'ner'
-            })
-            added_symptoms.add(norm_name)
+        # Шаг 3: NER (только для частотных симптомов из топ-74) - ВРЕМЕННО ОТКЛЮЧЕН
+        # for symptom in ner_results:  # <-- ЗАКОММЕНТИРОВАНО
+        #     name = symptom['canonical_name']
+        #     norm_name = self._normalize_name(name)
+        #     
+        #     if norm_name in added_symptoms:
+        #         continue
+        #     
+        #     if not self._is_symptom_in_top74(symptom['symptom_id']):
+        #         continue
+        #     
+        #     if symptom['confidence'] < self.ner_confidence_threshold:
+        #         continue
+        #     
+        #     if not self._is_symptom_in_text(text, name):
+        #         continue
+        #     
+        #     status = self._check_negation_with_rule(text, name)
+        #     
+        #     hybrid_results.append({
+        #         'symptom_id': symptom['symptom_id'],
+        #         'canonical_name': name,
+        #         'status': status,
+        #         'confidence': symptom['confidence'],
+        #         'source': 'ner'
+        #     })
+        #     added_symptoms.add(norm_name)
         
         # Шаг 4: Semantic (разные пороги для частотных и редких)
         for symptom in semantic_results:
@@ -273,7 +275,7 @@ class HybridExtractor(SymptomExtractor):
         return {
             'text': text,
             'rule_based': self.rule.extract(text),
-            'ner': self.ner.extract(text),
+            'ner': [],  # <-- ИЗМЕНЕНО (NER отключен)
             'semantic': self.semantic.extract(text, top_k=10),
             'hybrid': self.extract(text)
         }
