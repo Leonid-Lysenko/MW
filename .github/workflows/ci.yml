@@ -57,6 +57,14 @@ jobs:
         isort --check-only .
     
     - name: Run tests (skip E2E)
+      env:
+        DB_NAME: diagnostics_db
+        DB_USER: postgres
+        DB_PASSWORD: medic1312
+        DB_HOST: localhost
+        DB_PORT: 5432
+        SECRET_KEY: test-secret-key-for-ci
+        DEBUG: False
       run: |
         cd backend
-        pytest -m "not e2e"
+        pytest -m "not e2e" --no-cov
