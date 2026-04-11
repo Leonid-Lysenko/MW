@@ -37,7 +37,7 @@ def wait_for_results_page(browser, wait, timeout=10):
         "h2:contains('Результаты')",
         "h2:contains('Возможные заболевания')",
     ]
-    
+
     # Ждём изменения URL
     start_url = browser.current_url
     for _ in range(timeout):
@@ -45,7 +45,7 @@ def wait_for_results_page(browser, wait, timeout=10):
             time.sleep(1)
             return True
         time.sleep(0.5)
-    
+
     # Если URL не изменился, проверяем наличие элементов
     for selector in selectors:
         if selector.startswith("h2:"):
@@ -55,7 +55,7 @@ def wait_for_results_page(browser, wait, timeout=10):
             return True
         except:
             pass
-    
+
     return False
 
 
@@ -81,23 +81,22 @@ def test_nlp_text_input_flow(browser, live_server_url, wait):
     assert len(present_badges) > 0, "Не найдены распознанные симптомы"
 
     # 4. Нажатие кнопки анализа (переход к результатам)
-    analyze_btn = wait(browser).until(
-        EC.presence_of_element_located((By.CSS_SELECTOR, 'button[type="submit"]'))
-    )
-    
+    analyze_btn = wait(browser).until(EC.presence_of_element_located((By.CSS_SELECTOR, 'button[type="submit"]')))
+
     success = safe_click(browser, analyze_btn)
     assert success, "Не удалось нажать кнопку анализа"
 
     # 5. Ожидание перехода на страницу результатов
     time.sleep(2)
-    
+
     # Проверяем, что мы перешли на другую страницу
     assert browser.current_url != live_server_url, "URL не изменился, переход не произошёл"
-    
+
     # Проверяем, что на странице есть текст
     page_content = browser.page_source.lower()
-    assert "результат" in page_content or "вероятн" in page_content or "заболеван" in page_content, \
-        "Не перешли на страницу результатов"
+    assert (
+        "результат" in page_content or "вероятн" in page_content or "заболеван" in page_content
+    ), "Не перешли на страницу результатов"
 
 
 @pytest.mark.e2e
@@ -138,23 +137,22 @@ def test_manual_symptom_selection(browser, live_server_url, wait):
     assert banner.is_displayed(), "Баннер выбранных симптомов не отображается"
 
     # 6. Нажатие кнопки анализа (переход к результатам)
-    analyze_btn = wait(browser).until(
-        EC.presence_of_element_located((By.CSS_SELECTOR, 'button[type="submit"]'))
-    )
-    
+    analyze_btn = wait(browser).until(EC.presence_of_element_located((By.CSS_SELECTOR, 'button[type="submit"]')))
+
     success = safe_click(browser, analyze_btn)
     assert success, "Не удалось нажать кнопку анализа"
 
     # 7. Ожидание перехода на страницу результатов
     time.sleep(2)
-    
+
     # Проверяем, что мы перешли на другую страницу
     assert browser.current_url != live_server_url, "URL не изменился, переход не произошёл"
-    
+
     # 8. Проверка страницы результатов
     page_content = browser.page_source.lower()
-    assert "результат" in page_content or "вероятн" in page_content or "заболеван" in page_content, \
-        "Не перешли на страницу результатов"
+    assert (
+        "результат" in page_content or "вероятн" in page_content or "заболеван" in page_content
+    ), "Не перешли на страницу результатов"
 
 
 @pytest.mark.e2e

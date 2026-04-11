@@ -165,12 +165,12 @@ def test_disease_detail_kb_reverse(disease_name):
 def test_all_url_patterns_have_names():
     """Тест что все URL паттерны имеют имена."""
     url_names = [
-        "home", 
-        "predict", 
-        "disease_detail", 
-        "disease_detail_kb", 
-        "about", 
-        "how_to_use", 
+        "home",
+        "predict",
+        "disease_detail",
+        "disease_detail_kb",
+        "about",
+        "how_to_use",
         "knowledge_base",
         "extract_from_text_api",  # Добавлен новый URL для NLP модуля
     ]

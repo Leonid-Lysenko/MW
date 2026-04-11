@@ -21,7 +21,7 @@ from dotenv import load_dotenv
 
 # Загружаем переменные из .env файла
 BASE_DIR = Path(__file__).resolve().parent.parent  # backend/
-env_path = BASE_DIR / '.env'  # backend/.env
+env_path = BASE_DIR / ".env"  # backend/.env
 load_dotenv(env_path)
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -145,8 +145,9 @@ if "test" in sys.argv:
     ]
     DEBUG = False
     TEMPLATE_DEBUG = False
-    
+
     import logging
+
     logging.disable(logging.CRITICAL)
-    
+
     ML_MODEL_PATH = BASE_DIR / "diagnosis/tests/test_data/test_model.joblib"

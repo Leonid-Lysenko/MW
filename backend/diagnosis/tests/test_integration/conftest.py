@@ -41,28 +41,30 @@ mock_hybrid_class.return_value = mock_hybrid_instance
 mock_ml.nlp.extractors.hybrid.HybridExtractor = mock_hybrid_class
 
 # Подменяем модули в sys.modules
-sys.modules['ml'] = mock_ml
-sys.modules['ml.nlp'] = mock_ml.nlp
-sys.modules['ml.nlp.extractors'] = mock_ml.nlp.extractors
-sys.modules['ml.nlp.extractors.hybrid'] = mock_ml.nlp.extractors.hybrid
-sys.modules['ml.nlp.extractors.rule_based'] = mock_ml.nlp.extractors.rule_based
-sys.modules['ml.nlp.extractors.semantic_search'] = mock_ml.nlp.extractors.semantic_search
-sys.modules['ml.nlp.extractors.ner_rubio_finetuned'] = mock_ml.nlp.extractors.ner_rubio_finetuned
+sys.modules["ml"] = mock_ml
+sys.modules["ml.nlp"] = mock_ml.nlp
+sys.modules["ml.nlp.extractors"] = mock_ml.nlp.extractors
+sys.modules["ml.nlp.extractors.hybrid"] = mock_ml.nlp.extractors.hybrid
+sys.modules["ml.nlp.extractors.rule_based"] = mock_ml.nlp.extractors.rule_based
+sys.modules["ml.nlp.extractors.semantic_search"] = mock_ml.nlp.extractors.semantic_search
+sys.modules["ml.nlp.extractors.ner_rubio_finetuned"] = mock_ml.nlp.extractors.ner_rubio_finetuned
 
 # Также мокаем transformers и torch
-sys.modules['transformers'] = MagicMock()
-sys.modules['torch'] = MagicMock()
-sys.modules['sentence_transformers'] = MagicMock()
-sys.modules['huggingface_hub'] = MagicMock()
+sys.modules["transformers"] = MagicMock()
+sys.modules["torch"] = MagicMock()
+sys.modules["sentence_transformers"] = MagicMock()
+sys.modules["huggingface_hub"] = MagicMock()
 
 
 @pytest.fixture(autouse=True)
 def mock_nlp_dependencies():
     """Автоматически мокаем NLP зависимости для всех интеграционных тестов."""
-    with patch("diagnosis.views.hybrid_extractor") as mock_extractor, \
-         patch("diagnosis.views.nlp_loaded_successfully", True), \
-         patch("diagnosis.views.get_ml_symptoms") as mock_get_symptoms:
-        
+    with (
+        patch("diagnosis.views.hybrid_extractor") as mock_extractor,
+        patch("diagnosis.views.nlp_loaded_successfully", True),
+        patch("diagnosis.views.get_ml_symptoms") as mock_get_symptoms,
+    ):
+
         mock_extractor.extract.return_value = [
             {"canonical_name": "головная боль", "status": "present", "confidence": 0.95},
             {"canonical_name": "кашель", "status": "present", "confidence": 0.90},
@@ -72,13 +74,14 @@ def mock_nlp_dependencies():
             {"canonical_name": "мигрень", "confidence": 0.85},
         ]
         mock_get_symptoms.return_value = ["головная боль", "кашель", "температура"]
-        
+
         yield
 
 
 # ============================================================================
 # Остальные фикстуры
 # ============================================================================
+
 
 @pytest.fixture
 def client():

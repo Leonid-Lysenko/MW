@@ -100,12 +100,18 @@ def test_home_page_loads_correctly(client, setup_db_data):
 @pytest.mark.integration
 def test_symptom_selection_to_prediction(client, setup_db_data, common_symptoms):
     """Тест полного цикла: выбор симптомов -> отправка -> получение результатов."""
-    with patch("diagnosis.views.model") as mock_model, \
-         patch("diagnosis.views.get_ml_symptoms") as mock_get_symptoms:
-        
+    with patch("diagnosis.views.model") as mock_model, patch("diagnosis.views.get_ml_symptoms") as mock_get_symptoms:
+
         # Мокаем список симптомов из БД
-        mock_get_symptoms.return_value = ["Кашель", "Высокая температура", "Головная боль", "Насморк", "Чихание", "Усталость"]
-        
+        mock_get_symptoms.return_value = [
+            "Кашель",
+            "Высокая температура",
+            "Головная боль",
+            "Насморк",
+            "Чихание",
+            "Усталость",
+        ]
+
         mock_model.predict_proba.return_value = np.array([[0.8, 0.15, 0.05]])
         mock_model.classes_ = np.array(["Грипп", "Простуда", "COVID-19"])
 
@@ -123,10 +129,16 @@ def test_symptom_selection_to_prediction(client, setup_db_data, common_symptoms)
 @pytest.mark.integration
 def test_results_page_contains_disease_cards(client, setup_db_data, common_symptoms):
     """Тест что страница результатов содержит элементы интерфейса."""
-    with patch("diagnosis.views.model") as mock_model, \
-         patch("diagnosis.views.get_ml_symptoms") as mock_get_symptoms:
-        
-        mock_get_symptoms.return_value = ["Кашель", "Высокая температура", "Головная боль", "Насморк", "Чихание", "Усталость"]
+    with patch("diagnosis.views.model") as mock_model, patch("diagnosis.views.get_ml_symptoms") as mock_get_symptoms:
+
+        mock_get_symptoms.return_value = [
+            "Кашель",
+            "Высокая температура",
+            "Головная боль",
+            "Насморк",
+            "Чихание",
+            "Усталость",
+        ]
         mock_model.predict_proba.return_value = [[0.8, 0.15, 0.05]]
         mock_model.classes_ = np.array(["Грипп", "Простуда", "COVID-19"])
 
@@ -166,9 +178,8 @@ def test_empty_symptoms_submission(client):
 @pytest.mark.integration
 def test_single_symptom_diagnosis(client, setup_db_data, minimal_symptoms):
     """Тест диагностики с одним симптомом."""
-    with patch("diagnosis.views.model") as mock_model, \
-         patch("diagnosis.views.get_ml_symptoms") as mock_get_symptoms:
-        
+    with patch("diagnosis.views.model") as mock_model, patch("diagnosis.views.get_ml_symptoms") as mock_get_symptoms:
+
         mock_get_symptoms.return_value = ["Усталость"]
         mock_model.predict_proba.return_value = np.array([[1.0]])
         mock_model.classes_ = np.array(["Синдром хронической усталости"])
@@ -186,9 +197,8 @@ def test_single_symptom_diagnosis(client, setup_db_data, minimal_symptoms):
 @pytest.mark.integration
 def test_multiple_symptoms_diagnosis(client, setup_db_data, respiratory_symptoms):
     """Тест диагностики с множеством симптомов."""
-    with patch("diagnosis.views.model") as mock_model, \
-         patch("diagnosis.views.get_ml_symptoms") as mock_get_symptoms:
-        
+    with patch("diagnosis.views.model") as mock_model, patch("diagnosis.views.get_ml_symptoms") as mock_get_symptoms:
+
         mock_get_symptoms.return_value = ["Кашель", "Насморк", "Боль в горле", "Чихание"]
         mock_model.predict_proba.return_value = [[1.0]]
         mock_model.classes_ = np.array(["ОРВИ"])
@@ -212,9 +222,8 @@ def test_complete_user_journey(client, setup_db_data, common_symptoms):
     assert "freeTextInput" in home_content
 
     # 2. Диагностика с симптомами
-    with patch("diagnosis.views.model") as mock_model, \
-         patch("diagnosis.views.get_ml_symptoms") as mock_get_symptoms:
-        
+    with patch("diagnosis.views.model") as mock_model, patch("diagnosis.views.get_ml_symptoms") as mock_get_symptoms:
+
         mock_get_symptoms.return_value = ["Кашель", "Высокая температура", "Головная боль"]
         mock_model.predict_proba.return_value = [[1.0]]
         mock_model.classes_ = np.array(["Грипп"])
@@ -240,7 +249,7 @@ def test_nlp_text_input_on_home_page(client, setup_db_data):
     response = client.get(reverse("home"))
     assert response.status_code == 200
     content = response.content.decode("utf-8")
-    
+
     # Проверяем наличие элементов NLP интерфейса
     assert 'id="freeTextInput"' in content
     assert 'id="extractFromTextBtn"' in content

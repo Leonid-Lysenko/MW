@@ -307,24 +307,18 @@ nlp_loaded_successfully = False
 
 try:
     from ml.nlp.extractors.hybrid import HybridExtractor
-    
+
     hybrid_extractor = HybridExtractor(
-        semantic_threshold_common=0.85,
-        semantic_threshold_rare=0.75,
-        ner_confidence_threshold=0.75
+        semantic_threshold_common=0.85, semantic_threshold_rare=0.75, ner_confidence_threshold=0.75
     )
-    
+
     # Прогрев моделей (первоначальная инициализация)
-    warmup_phrases = [
-        "болит голова",
-        "кашель и температура",
-        "тошнота, слабость, головокружение"
-    ]
+    warmup_phrases = ["болит голова", "кашель и температура", "тошнота, слабость, головокружение"]
     for phrase in warmup_phrases:
         hybrid_extractor.extract(phrase)
-    
+
     nlp_loaded_successfully = True
-    
+
 except Exception:
     nlp_loaded_successfully = False
     hybrid_extractor = None
@@ -339,61 +333,56 @@ def extract_from_text_api(request):
     """
     try:
         data = json.loads(request.body)
-        user_text = data.get('text', '').strip()
-        
+        user_text = data.get("text", "").strip()
+
         if not user_text:
-            return JsonResponse({'error': 'Введите текст с симптомами'}, status=400)
-        
+            return JsonResponse({"error": "Введите текст с симптомами"}, status=400)
+
         if not nlp_loaded_successfully or hybrid_extractor is None:
-            return JsonResponse({'error': 'NLP-модуль временно недоступен'}, status=503)
-        
+            return JsonResponse({"error": "NLP-модуль временно недоступен"}, status=503)
+
         # Извлекаем симптомы
         extracted = hybrid_extractor.extract(user_text)
-        
+
         # Находим предполагаемые симптомы (похожие на найденные)
         suggested_symptoms = []
-        present_symptoms = [s for s in extracted if s['status'] == 'present']
-        
+        present_symptoms = [s for s in extracted if s["status"] == "present"]
+
         if present_symptoms:
             all_symptom_names = get_ml_symptoms()
-            found_names = set(s['canonical_name'] for s in present_symptoms)
-            
+            found_names = set(s["canonical_name"] for s in present_symptoms)
+
             for symptom in present_symptoms[:3]:
                 try:
                     similar = hybrid_extractor.semantic.find_similar(
-                        symptom['canonical_name'],
-                        exclude=found_names,
-                        top_k=2
+                        symptom["canonical_name"], exclude=found_names, top_k=2
                     )
                     suggested_symptoms.extend(similar)
                 except Exception:
                     pass  # Игнорируем ошибки при поиске похожих симптомов
-        
+
         # Убираем дубликаты
         unique_suggested = {}
         for s in suggested_symptoms:
-            name = s['canonical_name']
-            if name not in unique_suggested or s['confidence'] > unique_suggested[name]['confidence']:
+            name = s["canonical_name"]
+            if name not in unique_suggested or s["confidence"] > unique_suggested[name]["confidence"]:
                 unique_suggested[name] = s
-        
-        return JsonResponse({
-            'success': True,
-            'extracted_symptoms': [
-                {
-                    'canonical_name': s['canonical_name'],
-                    'status': s['status'],
-                    'confidence': s['confidence']
-                } for s in extracted
-            ],
-            'suggested_symptoms': [
-                {
-                    'name': s['canonical_name'],
-                    'similarity': s['confidence']
-                } for s in list(unique_suggested.values())[:5]
-            ]
-        })
-        
+
+        return JsonResponse(
+            {
+                "success": True,
+                "extracted_symptoms": [
+                    {"canonical_name": s["canonical_name"], "status": s["status"], "confidence": s["confidence"]}
+                    for s in extracted
+                ],
+                "suggested_symptoms": [
+                    {"name": s["canonical_name"], "similarity": s["confidence"]}
+                    for s in list(unique_suggested.values())[:5]
+                ],
+            }
+        )
+
     except json.JSONDecodeError:
-        return JsonResponse({'error': 'Неверный формат запроса'}, status=400)
+        return JsonResponse({"error": "Неверный формат запроса"}, status=400)
     except Exception as e:
-        return JsonResponse({'error': str(e)}, status=500)
+        return JsonResponse({"error": str(e)}, status=500)
