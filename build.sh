@@ -1,3 +1,4 @@
+```bash
 #!/bin/bash
 # build.sh - скрипт сборки для Render
 
@@ -8,16 +9,16 @@ pip install --upgrade pip
 pip install -r backend/requirements.txt
 pip install huggingface-hub
 
-# Предзагрузка E5-small модели (вместо E5-large)
-echo "Предзагрузка E5-small модели..."
-python -c "
-from sentence_transformers import SentenceTransformer
-print('Загрузка intfloat/multilingual-e5-small...')
-model = SentenceTransformer('intfloat/multilingual-e5-small')
-print('E5-small модель загружена')
-"
+# Предзагрузка E5-small модели - ОТКЛЮЧЕНО
+# echo "Предзагрузка E5-small модели..."
+# python -c "
+# from sentence_transformers import SentenceTransformer
+# print('Загрузка intfloat/multilingual-e5-small...')
+# model = SentenceTransformer('intfloat/multilingual-e5-small')
+# print('E5-small модель загружена')
+# "
 
-# Скачивание NER модели - ВРЕМЕННО ОТКЛЮЧЕНО
+# Скачивание NER модели - ОТКЛЮЧЕНО
 # echo "Скачивание NER модели..."
 # python -c "
 # from huggingface_hub import snapshot_download
@@ -38,3 +39,4 @@ print('E5-small модель загружена')
 # "
 
 echo "Сборка завершена!"
+```
