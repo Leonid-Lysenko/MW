@@ -32,6 +32,19 @@ jobs:
     - name: Install dependencies
       run: |
         pip install -r requirements-dev.txt
+        pip install huggingface-hub  # Для загрузки модели
+    
+    - name: Download NER model
+      run: |
+        python -c "
+        from huggingface_hub import snapshot_download
+        snapshot_download(
+            repo_id='velto006/rubio-ner-finetuned-74',
+            local_dir='ml/nlp/models/rubio_ner_finetuned_74',
+            local_dir_use_symlinks=False,
+            ignore_patterns=['*.pt', 'optimizer-*.pt', 'scheduler.pt', 'rng_state.pth', 'trainer_state.json']
+        )
+        "
     
     - name: Code quality checks
       run: |

@@ -66,7 +66,7 @@ class RuBioRobertaNERExtractor(SymptomExtractor):
                     symptom_map[name.lower()] = symptom_id
                     symptom_map[name] = symptom_id
         except Exception as e:
-            print(f"⚠️ Ошибка загрузки симптомов из БД: {e}")
+            print(f" Ошибка загрузки симптомов из БД: {e}")
         return symptom_map
     
     def _load_synonyms(self, synonyms_path: str) -> Dict[str, tuple]:
@@ -82,7 +82,7 @@ class RuBioRobertaNERExtractor(SymptomExtractor):
                     for synonym in synonyms:
                         synonyms_map[synonym.lower()] = (canonical_name, symptom_id)
         except Exception as e:
-            print(f"⚠️ Ошибка загрузки синонимов: {e}")
+            print(f" Ошибка загрузки синонимов: {e}")
         return synonyms_map
     
     def _merge_bpe_tokens(self, tokens: List[str], labels: List[str], probs: List[float]) -> List[Dict]:
