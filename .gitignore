@@ -2,6 +2,7 @@
 venv/
 env/
 .venv/
+.venv_corrupted/
 
 # Файлы Python
 __pycache__/
@@ -29,15 +30,19 @@ wheels/
 *.log
 local_settings.py
 db.sqlite3
+db.sqlite3-journal
 media/
+staticfiles/
 
 # Статические файлы
 staticfiles/
+static/
 
 # ML модели
 ml/models/*.pkl
 ml/models/*.h5
 ml/models/*.pth
+ml/models/*.joblib
 !ml/models/.gitkeep
 
 # NLP модуль
@@ -58,16 +63,20 @@ ml/nlp/logs/
 .huggingface/
 .cache/huggingface/
 ~/.cache/huggingface/
+hf_cache/
+models--*
 
 # Label Studio
 label_studio_data/
 label_studio_media/
 *.label_studio
+label-studio-export-*.json
 
 # Дампы базы данных
 *.sql
 *.sqlite3
 *.dump
+*.backup
 
 # Временные файлы
 *.tmp
@@ -79,22 +88,63 @@ label_studio_media/
 
 # Логи
 *.log
+logs/
+log/
 
 # Конфиденциальные данные
 config/local.py
 .env
-*.env
+.env.local
+.env.production
+.env.*.local
 secrets.py
+*.key
+*.pem
+*.crt
 
 # IDE
 .vscode/
 .idea/
 *.swp
 *.swo
+*~
+*.code-workspace
 
 # OS
 .DS_Store
 Thumbs.db
+desktop.ini
 
 # Jupyter
 .ipynb_checkpoints/
+*.ipynb
+
+# Тесты и покрытие
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+*.cover
+coverage.xml
+
+# Документация
+docs/_build/
+site/
+
+# Docker
+*.log
+*.pid
+*.pid.lock
+
+# PostgreSQL
+pgdata/
+pg_hba.conf
+postgresql.conf
+
+# Проект-специфичное
+backend/.env
+backend/.env.example
+ml/nlp/data/synonyms/synonyms_updated.json
+ml/nlp/data/synonyms/synonyms_74.json
+ml/nlp/data/cache/
+*.safetensors
