@@ -77,16 +77,32 @@ WSGI_APPLICATION = "medical_site.wsgi.application"
 
 
 # Database
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": os.environ.get("DB_NAME", "diagnostics_db"),
-        "USER": os.environ.get("DB_USER", "postgres"),
-        "PASSWORD": os.environ.get("DB_PASSWORD", ""),
-        "HOST": os.environ.get("DB_HOST", "localhost"),
-        "PORT": os.environ.get("DB_PORT", "5432"),
+ON_RENDER = os.environ.get("RENDER", False)
+
+if ON_RENDER:
+    # На Render используем PostgreSQL из переменных окружения
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": os.environ.get("DB_NAME"),
+            "USER": os.environ.get("DB_USER"),
+            "PASSWORD": os.environ.get("DB_PASSWORD"),
+            "HOST": os.environ.get("DB_HOST"),
+            "PORT": os.environ.get("DB_PORT", "5432"),
+        }
     }
-}
+else:
+    # Локальная разработка
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": os.environ.get("DB_NAME", "diagnostics_db"),
+            "USER": os.environ.get("DB_USER", "postgres"),
+            "PASSWORD": os.environ.get("DB_PASSWORD", ""),
+            "HOST": os.environ.get("DB_HOST", "localhost"),
+            "PORT": os.environ.get("DB_PORT", "5432"),
+        }
+    }
 
 
 # Password validation
@@ -137,3 +153,23 @@ if "test" in sys.argv:
     logging.disable(logging.CRITICAL)
 
     ML_MODEL_PATH = BASE_DIR / "diagnosis/tests/test_data/test_model.joblib"
+
+
+# ============================================================================
+# Автоматическая миграция на Render
+# ============================================================================
+if ON_RENDER:
+    try:
+        from django.core.management import call_command
+        from django.db import connection
+        
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT COUNT(*) FROM pg_catalog.pg_tables WHERE schemaname='public'")
+            count = cursor.fetchone()[0]
+            if count == 0:
+                call_command('migrate', interactive=False)
+                print("Migrations applied on startup")
+            else:
+                print("Database already has tables")
+    except Exception as e:
+        print(f"Migration error: {e}")
