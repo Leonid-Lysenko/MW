@@ -4,10 +4,11 @@ E2E тесты полных пользовательских сценариев 
 """
 
 import time
+
 import pytest
+from selenium.common.exceptions import ElementClickInterceptedException, TimeoutException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import ElementClickInterceptedException, TimeoutException
 
 
 def safe_click(driver, element, max_attempts=3):

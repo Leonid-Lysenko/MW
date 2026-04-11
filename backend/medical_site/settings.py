@@ -17,6 +17,7 @@ Django settings for medical_site project.
 import os
 import sys
 from pathlib import Path
+
 from dotenv import load_dotenv
 
 # Загружаем переменные из .env файла

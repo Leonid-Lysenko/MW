@@ -2,7 +2,7 @@
 """Unit-тесты для URL маршрутов NLP модуля."""
 
 import pytest
-from django.urls import reverse, resolve, get_resolver
+from django.urls import get_resolver, resolve, reverse
 
 
 @pytest.mark.unit

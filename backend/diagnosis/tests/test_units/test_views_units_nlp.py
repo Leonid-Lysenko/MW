@@ -3,11 +3,11 @@
 
 import json
 import time
-import pytest
 from unittest.mock import Mock, patch
-from django.urls import reverse
-from django.test import RequestFactory
 
+import pytest
+from django.test import RequestFactory
+from django.urls import reverse
 
 # Импортируем view
 from diagnosis.views import extract_from_text_api, get_ml_symptoms

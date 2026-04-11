@@ -45,15 +45,14 @@ sys.modules["torch"] = MagicMock()
 sys.modules["sentence_transformers"] = MagicMock()
 sys.modules["huggingface_hub"] = MagicMock()
 
-from unittest.mock import MagicMock, patch, Mock
+import json
+import os
+import sys
+from unittest.mock import MagicMock, Mock, patch
 
 import numpy as np
 import pytest
 from django.test import Client, RequestFactory
-import sys
-import json
-import os
-
 
 # Добавляем путь к ml модулю
 PROJECT_ROOT = os.path.dirname(
