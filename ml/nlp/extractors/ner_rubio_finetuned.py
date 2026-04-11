@@ -8,25 +8,43 @@ from transformers import AutoTokenizer, AutoModelForTokenClassification
 from .base import SymptomExtractor
 from django.db import connection
 
+# HuggingFace ID модели
+HF_MODEL_ID = "velto006/rubio-ner-finetuned-74"
+
+
 class RuBioRobertaNERExtractor(SymptomExtractor):
     """
     Экстрактор симптомов на основе дообученной RuBioRoBERTa.
     Обучен на 74 симптомах (только 3 класса: O, B-SYMP, I-SYMP).
+    Модель загружается с HuggingFace Hub при отсутствии локальной копии.
     """
     
     def __init__(self, model_path: Optional[str] = None, synonyms_path: Optional[str] = None):
         """Инициализирует экстрактор."""
         super().__init__()
         
-        if model_path is None:
-            current_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-            model_path = os.path.join(current_dir, 'models', 'rubio_ner_finetuned_74', 'checkpoint-1431')
+        current_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         
         if synonyms_path is None:
-            current_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
             synonyms_path = os.path.join(current_dir, 'data', 'synonyms', 'synonyms_74.json')
         
-        # print(f"Загрузка дообученной модели из {model_path}...")
+        # Определяем путь к модели
+        if model_path is None:
+            local_path = os.path.join(current_dir, 'models', 'rubio_ner_finetuned_74')
+            
+            # Проверяем наличие локальной модели
+            if os.path.exists(os.path.join(local_path, 'model.safetensors')):
+                model_path = local_path
+            else:
+                # Загружаем с HuggingFace
+                from huggingface_hub import snapshot_download
+                model_path = snapshot_download(
+                    repo_id=HF_MODEL_ID,
+                    local_dir=local_path,
+                    local_dir_use_symlinks=False,
+                    ignore_patterns=["*.pt", "optimizer-*.pt", "scheduler.pt", "rng_state.pth", "trainer_state.json"]
+                )
+        
         self.tokenizer = AutoTokenizer.from_pretrained(model_path)
         self.model = AutoModelForTokenClassification.from_pretrained(model_path)
         self.model.eval()
@@ -34,15 +52,8 @@ class RuBioRobertaNERExtractor(SymptomExtractor):
         self.id2label = self.model.config.id2label
         self.label2id = self.model.config.label2id
         
-        # Загружаем маппинг симптомов из БД (все 304)
         self.symptom_map = self._load_symptom_map()
-        
-        # Загружаем словарь синонимов (только для 74 симптомов)
         self.synonyms_map = self._load_synonyms(synonyms_path)
-        
-        # print(f" Модель загружена. Метки: {list(self.id2label.values())}")
-        # print(f" Загружено {len(self.symptom_map)} симптомов из БД")
-        # print(f" Загружено {len(self.synonyms_map)} синонимов (74 симптома)")
     
     def _load_symptom_map(self) -> Dict[str, int]:
         """Загружает маппинг названий симптомов в их ID из БД."""
@@ -55,7 +66,7 @@ class RuBioRobertaNERExtractor(SymptomExtractor):
                     symptom_map[name.lower()] = symptom_id
                     symptom_map[name] = symptom_id
         except Exception as e:
-            print(f" Ошибка загрузки симптомов из БД: {e}")
+            print(f"⚠️ Ошибка загрузки симптомов из БД: {e}")
         return symptom_map
     
     def _load_synonyms(self, synonyms_path: str) -> Dict[str, tuple]:
@@ -71,13 +82,11 @@ class RuBioRobertaNERExtractor(SymptomExtractor):
                     for synonym in synonyms:
                         synonyms_map[synonym.lower()] = (canonical_name, symptom_id)
         except Exception as e:
-            print(f" Ошибка загрузки синонимов: {e}")
+            print(f"⚠️ Ошибка загрузки синонимов: {e}")
         return synonyms_map
     
     def _merge_bpe_tokens(self, tokens: List[str], labels: List[str], probs: List[float]) -> List[Dict]:
-        """
-        Объединяет BPE-токены в цельные слова.
-        """
+        """Объединяет BPE-токены в цельные слова."""
         merged = []
         current_word = ""
         current_label = None
@@ -89,14 +98,12 @@ class RuBioRobertaNERExtractor(SymptomExtractor):
             
             score = probs[i] if i < len(probs) else 0.5
             
-            # Токен с ## - это продолжение
             if token.startswith('##'):
                 current_word += token[2:]
                 current_scores.append(score)
                 if current_label is None:
                     current_label = label
             else:
-                # Сохраняем предыдущее слово
                 if current_word and current_label:
                     avg_score = sum(current_scores) / len(current_scores)
                     merged.append({
@@ -105,11 +112,7 @@ class RuBioRobertaNERExtractor(SymptomExtractor):
                         'score': avg_score
                     })
                 
-                # Начинаем новое слово
-                # Убираем символ Ġ (пробел)
                 clean_token = token.replace('Ġ', '')
-                
-                # Пробуем декодировать через токенизатор
                 try:
                     decoded = self.tokenizer.convert_tokens_to_string([clean_token])
                     current_word = decoded
@@ -119,7 +122,6 @@ class RuBioRobertaNERExtractor(SymptomExtractor):
                 current_label = label
                 current_scores = [score]
         
-        # Добавляем последнее слово
         if current_word and current_label:
             avg_score = sum(current_scores) / len(current_scores)
             merged.append({
@@ -131,9 +133,7 @@ class RuBioRobertaNERExtractor(SymptomExtractor):
         return merged
     
     def _group_entities(self, words: List[Dict]) -> List[Dict]:
-        """
-        Группирует слова в сущности по BIO-разметке.
-        """
+        """Группирует слова в сущности по BIO-разметке."""
         entities = []
         current_entity = None
         
@@ -167,16 +167,13 @@ class RuBioRobertaNERExtractor(SymptomExtractor):
         """Находит симптом по тексту, используя словарь синонимов."""
         text_lower = text.lower().strip()
         
-        # 1. Точное совпадение с каноническим названием
         if text_lower in self.symptom_map:
             return text, self.symptom_map[text_lower]
         
-        # 2. Поиск по синонимам
         if text_lower in self.synonyms_map:
             canon_name, symptom_id = self.synonyms_map[text_lower]
             return canon_name, symptom_id
         
-        # 3. Поиск по вхождению
         for canon_name, sid in self.symptom_map.items():
             if isinstance(canon_name, str):
                 canon_lower = canon_name.lower()
@@ -203,22 +200,17 @@ class RuBioRobertaNERExtractor(SymptomExtractor):
             probs = torch.nn.functional.softmax(outputs.logits, dim=-1)
             predictions = torch.argmax(outputs.logits, dim=2)
         
-        # Получаем BPE-токены
         tokens = self.tokenizer.convert_ids_to_tokens(inputs['input_ids'][0])
         
         preds = predictions[0].tolist()
         labels = [self.id2label[p] for p in preds]
         token_probs = [probs[0][i][p].item() for i, p in enumerate(preds)]
         
-        # Объединяем BPE-токены в слова
         words = self._merge_bpe_tokens(tokens, labels, token_probs)
-        
-        # Группируем слова в сущности
         entities = self._group_entities(words)
         
         symptoms = []
         for entity in entities:
-            # Только B-SYMP и I-SYMP
             if entity['label'] in ['B-SYMP', 'I-SYMP']:
                 status = 'present'
             else:

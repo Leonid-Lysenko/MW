@@ -20,7 +20,8 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 # Загружаем переменные из .env файла
-env_path = Path(__file__).resolve().parent / '.env'
+BASE_DIR = Path(__file__).resolve().parent.parent  # backend/
+env_path = BASE_DIR / '.env'  # backend/.env
 load_dotenv(env_path)
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
