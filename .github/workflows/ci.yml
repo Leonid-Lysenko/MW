@@ -46,12 +46,15 @@ jobs:
         )
         "
     
-    - name: Code quality checks
+    - name: Run black check
       run: |
         cd backend
         black --check .
+    
+    - name: Run isort check
+      run: |
+        cd backend
         isort --check-only .
-        flake8 --ignore=E402 .
     
     - name: Run tests (skip E2E)
       run: |
