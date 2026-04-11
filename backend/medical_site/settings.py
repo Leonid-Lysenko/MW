@@ -126,3 +126,21 @@ if "test" in sys.argv:
     logging.disable(logging.CRITICAL)
 
     ML_MODEL_PATH = BASE_DIR / "diagnosis/tests/test_data/test_model.joblib"
+
+
+# ============================================================================
+# АВТОМАТИЧЕСКАЯ МИГРАЦИЯ - ЗАКОММЕНТИРОВАНО (не нужно для JSON)
+# ============================================================================
+# if os.environ.get("RENDER"):
+#     try:
+#         from django.core.management import call_command
+#         from django.db import connection
+#         
+#         with connection.cursor() as cursor:
+#             cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='diagnosis_symptom';")
+#             if not cursor.fetchone():
+#                 print("Running migrations for SQLite...")
+#                 call_command('migrate', interactive=False, verbosity=1)
+#                 print("Migrations completed.")
+#     except Exception as e:
+#         print(f"Migration error: {e}")
