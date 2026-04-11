@@ -10,12 +10,13 @@ from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 
-from .models import Disease, Symptom
+from .symptoms_data import SYMPTOMS_LIST
+from .disease_data import DISEASE_DATABASE
 
 
 def get_ml_symptoms():
-    """Централизованное получение списка симптомов из БД для ML-логики."""
-    return list(Symptom.objects.all().order_by("id").values_list("name", flat=True))
+    """Возвращает список симптомов из JSON-хранилища."""
+    return SYMPTOMS_LIST
 
 
 # Глобальные переменные для отслеживания состояния системы
@@ -25,7 +26,6 @@ model_loaded_successfully = False
 model_error_message = ""
 
 # Инициализация ML-модели и данных при запуске приложения
-
 try:
     model = joblib.load(settings.ML_MODEL_PATH)
     diseases_list = model.classes_.tolist()
@@ -42,29 +42,29 @@ except Exception as e:
 
 def get_disease_info_from_db(disease_name):
     """
-    Возвращает информацию о заболевании из PostgreSQL через Django ORM.
+    Возвращает информацию о заболевании из JSON-хранилища.
     Если заболевание не найдено, возвращает базовую информацию.
     """
-    try:
-        disease_obj = Disease.objects.get(name__iexact=disease_name)
+    disease_name_lower = disease_name.lower()
+    for name, info in DISEASE_DATABASE.items():
+        if name.lower() == disease_name_lower:
+            return {
+                "description": info["description"],
+                "treatment": info["treatment"],
+                "symptoms": info["symptoms"],
+                "severity": info["severity"],
+                "specialist": info["specialist"],
+                "category": info["category"],
+            }
 
-        return {
-            "description": disease_obj.description,
-            "treatment": disease_obj.treatment,
-            "symptoms": disease_obj.symptoms,
-            "severity": disease_obj.severity,
-            "specialist": disease_obj.specialist,
-            "category": disease_obj.category,
-        }
-    except Disease.DoesNotExist:
-        return {
-            "description": f"Информация о заболевании '{disease_name}' готовится нашими специалистами. Обратитесь к врачу для точной диагностики и лечения.",
-            "treatment": "Для назначения лечения обратитесь к квалифицированному медицинскому специалисту. Не занимайтесь самолечением.",
-            "symptoms": ["Информация уточняется"],
-            "severity": "unknown",
-            "specialist": "Терапевт",
-            "category": "Уточняется",
-        }
+    return {
+        "description": f"Информация о заболевании '{disease_name}' готовится нашими специалистами. Обратитесь к врачу для точной диагностики и лечения.",
+        "treatment": "Для назначения лечения обратитесь к квалифицированному медицинскому специалисту. Не занимайтесь самолечением.",
+        "symptoms": ["Информация уточняется"],
+        "severity": "unknown",
+        "specialist": "Терапевт",
+        "category": "Уточняется",
+    }
 
 
 def home(request):
@@ -249,27 +249,25 @@ def knowledge_base(request):
     """
     Отображает страницу базы знаний со всеми заболеваниями.
     """
-    all_diseases_objects = Disease.objects.order_by("name").all()
-
     diseases_with_info = []
-
-    for disease_obj in all_diseases_objects:
-        severity_text = get_severity_display(disease_obj.severity)
-
+    for name, info in DISEASE_DATABASE.items():
+        severity_text = get_severity_display(info["severity"])
         diseases_with_info.append(
             {
-                "name": disease_obj.name,
+                "name": name,
                 "info": {
-                    "description": disease_obj.description,
-                    "treatment": disease_obj.treatment,
-                    "symptoms": disease_obj.symptoms,
-                    "severity": disease_obj.severity,
-                    "specialist": disease_obj.specialist,
-                    "category": disease_obj.category,
+                    "description": info["description"],
+                    "treatment": info["treatment"],
+                    "symptoms": info["symptoms"],
+                    "severity": info["severity"],
+                    "specialist": info["specialist"],
+                    "category": info["category"],
                 },
                 "severity_display": severity_text,
             }
         )
+
+    diseases_with_info.sort(key=lambda x: x["name"])
 
     diseases_by_letter = {}
     for disease in diseases_with_info:
@@ -281,7 +279,7 @@ def knowledge_base(request):
     return render(
         request,
         "diagnosis/knowledge_base.html",
-        {"diseases_by_letter": diseases_by_letter, "total_diseases": len(all_diseases_objects)},
+        {"diseases_by_letter": diseases_by_letter, "total_diseases": len(diseases_with_info)},
     )
 
 
@@ -313,7 +311,6 @@ try:
         semantic_threshold_common=0.85, semantic_threshold_rare=0.75, ner_confidence_threshold=0.75
     )
 
-    # Прогрев моделей (первоначальная инициализация)
     warmup_phrases = ["болит голова", "кашель и температура", "тошнота, слабость, головокружение"]
     for phrase in warmup_phrases:
         hybrid_extractor.extract(phrase)
@@ -342,10 +339,8 @@ def extract_from_text_api(request):
         if not nlp_loaded_successfully or hybrid_extractor is None:
             return JsonResponse({"error": "NLP-модуль временно недоступен"}, status=503)
 
-        # Извлекаем симптомы
         extracted = hybrid_extractor.extract(user_text)
 
-        # Находим предполагаемые симптомы (похожие на найденные)
         suggested_symptoms = []
         present_symptoms = [s for s in extracted if s["status"] == "present"]
 
@@ -360,9 +355,8 @@ def extract_from_text_api(request):
                     )
                     suggested_symptoms.extend(similar)
                 except Exception:
-                    pass  # Игнорируем ошибки при поиске похожих симптомов
+                    pass
 
-        # Убираем дубликаты
         unique_suggested = {}
         for s in suggested_symptoms:
             name = s["canonical_name"]

@@ -1,31 +1,21 @@
 from django.db import models
+from .symptoms_data import SYMPTOMS_LIST
+from .disease_data import DISEASE_DATABASE
 
 
 class Disease(models.Model):
     """Модель для хранения детальной информации о заболевании."""
 
-    # Название заболевания - должно быть уникальным
     name = models.CharField(max_length=255, unique=True, verbose_name="Название заболевания")
-
-    # Краткое описание
     description = models.TextField(verbose_name="Описание")
-
-    # Рекомендации по лечению
     treatment = models.TextField(verbose_name="Лечение")
-
-    # Список симптомов (в виде JSON-массива строк)
     symptoms = models.JSONField(verbose_name="Симптомы")
-
-    # Степень серьезности ('high', 'medium', 'low', 'unknown')
     severity = models.CharField(max_length=50, verbose_name="Степень серьезности")
-
-    # Специалист
     specialist = models.CharField(max_length=100, verbose_name="Специалист")
-
-    # Категория
     category = models.CharField(max_length=100, verbose_name="Категория")
 
     class Meta:
+        managed = False
         verbose_name = "Заболевание"
         verbose_name_plural = "Заболевания"
 
@@ -37,6 +27,7 @@ class Symptom(models.Model):
     name = models.CharField(max_length=255, unique=True, verbose_name="Название симптома")
 
     class Meta:
+        managed = False
         verbose_name = "Симптом"
         verbose_name_plural = "Симптомы"
         ordering = ["id"]

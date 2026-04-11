@@ -6,7 +6,6 @@ import os
 import sys
 from pathlib import Path
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Загружаем переменные из .env файла (только если файл существует)
@@ -22,13 +21,8 @@ if PROJECT_ROOT not in sys.path:
 
 ML_MODEL_PATH = os.path.join(BASE_DIR, "..", "ml", "models", "lr_model_full_data.joblib")
 
-# SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get("SECRET_KEY", "django-insecure-development-key-123")
-
-# SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get("DEBUG", "True") == "True"
-
-# ALLOWED_HOSTS - обязательно добавьте домен Render
 ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "localhost,127.0.0.1,medical-diagnosis-advanced.onrender.com").split(",")
 
 
@@ -41,7 +35,6 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "diagnosis",
-    "django.contrib.postgres",
 ]
 
 MIDDLEWARE = [
@@ -76,33 +69,13 @@ TEMPLATES = [
 WSGI_APPLICATION = "medical_site.wsgi.application"
 
 
-# Database
-ON_RENDER = os.environ.get("RENDER", False)
-
-if ON_RENDER:
-    # На Render используем PostgreSQL из переменных окружения
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.postgresql",
-            "NAME": os.environ.get("DB_NAME"),
-            "USER": os.environ.get("DB_USER"),
-            "PASSWORD": os.environ.get("DB_PASSWORD"),
-            "HOST": os.environ.get("DB_HOST"),
-            "PORT": os.environ.get("DB_PORT", "5432"),
-        }
+# Database - SQLite для совместимости (данные из JSON)
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": BASE_DIR / "db.sqlite3",
     }
-else:
-    # Локальная разработка
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.postgresql",
-            "NAME": os.environ.get("DB_NAME", "diagnostics_db"),
-            "USER": os.environ.get("DB_USER", "postgres"),
-            "PASSWORD": os.environ.get("DB_PASSWORD", ""),
-            "HOST": os.environ.get("DB_HOST", "localhost"),
-            "PORT": os.environ.get("DB_PORT", "5432"),
-        }
-    }
+}
 
 
 # Password validation
