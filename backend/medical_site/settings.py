@@ -8,11 +8,15 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Загружаем переменные из .env файла (только если файл существует)
+# Загружаем переменные из .env файла
 env_path = BASE_DIR / ".env"
 if env_path.exists():
     from dotenv import load_dotenv
     load_dotenv(env_path)
+
+# Определяем окружение
+DEBUG = os.environ.get("DEBUG", "True") == "True"
+ON_RENDER = os.environ.get("RENDER", False)
 
 # Добавляем путь к корню проекта для импорта ml модуля
 PROJECT_ROOT = os.path.dirname(BASE_DIR)
@@ -21,8 +25,16 @@ if PROJECT_ROOT not in sys.path:
 
 ML_MODEL_PATH = os.path.join(BASE_DIR, "..", "ml", "models", "lr_model_full_data.joblib")
 
-SECRET_KEY = os.environ.get("SECRET_KEY", "django-insecure-development-key-123")
-DEBUG = os.environ.get("DEBUG", "True") == "True"
+# SECURITY WARNING: keep the secret key used in production secret!
+SECRET_KEY = os.environ.get("SECRET_KEY")
+if not SECRET_KEY:
+    if DEBUG:
+        from django.core.management.utils import get_random_secret_key
+        SECRET_KEY = get_random_secret_key()
+        print("Warning: Using temporary SECRET_KEY for development. Set SECRET_KEY environment variable for production.")
+    else:
+        raise ValueError("SECRET_KEY environment variable must be set in production")
+
 ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "localhost,127.0.0.1,medical-diagnosis-advanced.onrender.com").split(",")
 
 
@@ -69,13 +81,27 @@ TEMPLATES = [
 WSGI_APPLICATION = "medical_site.wsgi.application"
 
 
-# Database - SQLite для совместимости (данные из JSON)
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+# Database
+if DEBUG:
+    # Локальная разработка: PostgreSQL
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": os.environ.get("DB_NAME", "diagnostics_db"),
+            "USER": os.environ.get("DB_USER", "postgres"),
+            "PASSWORD": os.environ.get("DB_PASSWORD", ""),
+            "HOST": os.environ.get("DB_HOST", "localhost"),
+            "PORT": os.environ.get("DB_PORT", "5432"),
+        }
     }
-}
+else:
+    # Продакшен (Render): SQLite (данные из JSON)
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
+    }
 
 
 # Password validation
@@ -126,21 +152,3 @@ if "test" in sys.argv:
     logging.disable(logging.CRITICAL)
 
     ML_MODEL_PATH = BASE_DIR / "diagnosis/tests/test_data/test_model.joblib"
-
-
-# ============================================================================
-# АВТОМАТИЧЕСКАЯ МИГРАЦИЯ - ЗАКОММЕНТИРОВАНО (не нужно для JSON)
-# ============================================================================
-# if os.environ.get("RENDER"):
-#     try:
-#         from django.core.management import call_command
-#         from django.db import connection
-#         
-#         with connection.cursor() as cursor:
-#             cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='diagnosis_symptom';")
-#             if not cursor.fetchone():
-#                 print("Running migrations for SQLite...")
-#                 call_command('migrate', interactive=False, verbosity=1)
-#                 print("Migrations completed.")
-#     except Exception as e:
-#         print(f"Migration error: {e}")
