@@ -1,5 +1,6 @@
 import json
 import time
+import os
 
 import joblib
 import numpy as np
@@ -10,13 +11,69 @@ from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 
-from .symptoms_data import SYMPTOMS_LIST
-from .disease_data import DISEASE_DATABASE
+# Определяем режим работы по переменной окружения
+DEBUG = os.environ.get("DEBUG", "True") == "True"
 
-
-def get_ml_symptoms():
-    """Возвращает список симптомов из JSON-хранилища."""
-    return SYMPTOMS_LIST
+if DEBUG:
+    # Локальная разработка: используем БД
+    from .models import Disease, Symptom
+    
+    def get_ml_symptoms():
+        """Возвращает список симптомов из БД."""
+        return list(Symptom.objects.all().order_by("id").values_list("name", flat=True))
+    
+    def get_disease_info_from_db(disease_name):
+        """Возвращает информацию о заболевании из БД."""
+        try:
+            disease_obj = Disease.objects.get(name__iexact=disease_name)
+            return {
+                "description": disease_obj.description,
+                "treatment": disease_obj.treatment,
+                "symptoms": disease_obj.symptoms,
+                "severity": disease_obj.severity,
+                "specialist": disease_obj.specialist,
+                "category": disease_obj.category,
+            }
+        except Disease.DoesNotExist:
+            return {
+                "description": f"Информация о заболевании '{disease_name}' готовится нашими специалистами. Обратитесь к врачу для точной диагностики и лечения.",
+                "treatment": "Для назначения лечения обратитесь к квалифицированному медицинскому специалисту. Не занимайтесь самолечением.",
+                "symptoms": ["Информация уточняется"],
+                "severity": "unknown",
+                "specialist": "Терапевт",
+                "category": "Уточняется",
+            }
+else:
+    # Продакшен (Render): используем JSON
+    from .symptoms_data import SYMPTOMS_LIST
+    from .disease_data import DISEASE_DATABASE
+    
+    def get_ml_symptoms():
+        """Возвращает список симптомов из JSON-хранилища."""
+        return SYMPTOMS_LIST
+    
+    def get_disease_info_from_db(disease_name):
+        """Возвращает информацию о заболевании из JSON-хранилища."""
+        disease_name_lower = disease_name.lower()
+        for name, info in DISEASE_DATABASE.items():
+            if name.lower() == disease_name_lower:
+                return {
+                    "description": info["description"],
+                    "treatment": info["treatment"],
+                    "symptoms": info["symptoms"],
+                    "severity": info["severity"],
+                    "specialist": info["specialist"],
+                    "category": info["category"],
+                }
+        
+        return {
+            "description": f"Информация о заболевании '{disease_name}' готовится нашими специалистами. Обратитесь к врачу для точной диагностики и лечения.",
+            "treatment": "Для назначения лечения обратитесь к квалифицированному медицинскому специалисту. Не занимайтесь самолечением.",
+            "symptoms": ["Информация уточняется"],
+            "severity": "unknown",
+            "specialist": "Терапевт",
+            "category": "Уточняется",
+        }
 
 
 # Глобальные переменные для отслеживания состояния системы
@@ -38,33 +95,6 @@ except Exception as e:
     model_loaded_successfully = False
     model_error_message = "система диагностики временно недоступна"
     print(f"Ошибка загрузки ML-модели: {e}")
-
-
-def get_disease_info_from_db(disease_name):
-    """
-    Возвращает информацию о заболевании из JSON-хранилища.
-    Если заболевание не найдено, возвращает базовую информацию.
-    """
-    disease_name_lower = disease_name.lower()
-    for name, info in DISEASE_DATABASE.items():
-        if name.lower() == disease_name_lower:
-            return {
-                "description": info["description"],
-                "treatment": info["treatment"],
-                "symptoms": info["symptoms"],
-                "severity": info["severity"],
-                "specialist": info["specialist"],
-                "category": info["category"],
-            }
-
-    return {
-        "description": f"Информация о заболевании '{disease_name}' готовится нашими специалистами. Обратитесь к врачу для точной диагностики и лечения.",
-        "treatment": "Для назначения лечения обратитесь к квалифицированному медицинскому специалисту. Не занимайтесь самолечением.",
-        "symptoms": ["Информация уточняется"],
-        "severity": "unknown",
-        "specialist": "Терапевт",
-        "category": "Уточняется",
-    }
 
 
 def home(request):
@@ -249,25 +279,46 @@ def knowledge_base(request):
     """
     Отображает страницу базы знаний со всеми заболеваниями.
     """
-    diseases_with_info = []
-    for name, info in DISEASE_DATABASE.items():
-        severity_text = get_severity_display(info["severity"])
-        diseases_with_info.append(
-            {
-                "name": name,
-                "info": {
-                    "description": info["description"],
-                    "treatment": info["treatment"],
-                    "symptoms": info["symptoms"],
-                    "severity": info["severity"],
-                    "specialist": info["specialist"],
-                    "category": info["category"],
-                },
-                "severity_display": severity_text,
-            }
-        )
-
-    diseases_with_info.sort(key=lambda x: x["name"])
+    if DEBUG:
+        # Локальная разработка: из БД
+        all_diseases_objects = Disease.objects.order_by("name").all()
+        diseases_with_info = []
+        for disease_obj in all_diseases_objects:
+            severity_text = get_severity_display(disease_obj.severity)
+            diseases_with_info.append(
+                {
+                    "name": disease_obj.name,
+                    "info": {
+                        "description": disease_obj.description,
+                        "treatment": disease_obj.treatment,
+                        "symptoms": disease_obj.symptoms,
+                        "severity": disease_obj.severity,
+                        "specialist": disease_obj.specialist,
+                        "category": disease_obj.category,
+                    },
+                    "severity_display": severity_text,
+                }
+            )
+    else:
+        # Продакшен: из JSON
+        diseases_with_info = []
+        for name, info in DISEASE_DATABASE.items():
+            severity_text = get_severity_display(info["severity"])
+            diseases_with_info.append(
+                {
+                    "name": name,
+                    "info": {
+                        "description": info["description"],
+                        "treatment": info["treatment"],
+                        "symptoms": info["symptoms"],
+                        "severity": info["severity"],
+                        "specialist": info["specialist"],
+                        "category": info["category"],
+                    },
+                    "severity_display": severity_text,
+                }
+            )
+        diseases_with_info.sort(key=lambda x: x["name"])
 
     diseases_by_letter = {}
     for disease in diseases_with_info:
@@ -304,22 +355,28 @@ def get_severity_display(severity):
 hybrid_extractor = None
 nlp_loaded_successfully = False
 
-try:
-    from ml.nlp.extractors.hybrid import HybridExtractor
+# Загружаем NLP только в режиме DEBUG или если явно указано
+if DEBUG:
+    try:
+        from ml.nlp.extractors.hybrid import HybridExtractor
 
-    hybrid_extractor = HybridExtractor(
-        semantic_threshold_common=0.85, semantic_threshold_rare=0.75, ner_confidence_threshold=0.75
-    )
+        hybrid_extractor = HybridExtractor(
+            semantic_threshold_common=0.85, semantic_threshold_rare=0.75, ner_confidence_threshold=0.75
+        )
 
-    warmup_phrases = ["болит голова", "кашель и температура", "тошнота, слабость, головокружение"]
-    for phrase in warmup_phrases:
-        hybrid_extractor.extract(phrase)
+        warmup_phrases = ["болит голова", "кашель и температура", "тошнота, слабость, головокружение"]
+        for phrase in warmup_phrases:
+            hybrid_extractor.extract(phrase)
 
-    nlp_loaded_successfully = True
+        nlp_loaded_successfully = True
+        print("NLP модуль загружен (локальный режим)")
 
-except Exception:
-    nlp_loaded_successfully = False
-    hybrid_extractor = None
+    except Exception as e:
+        print(f"Ошибка загрузки NLP модуля: {e}")
+        nlp_loaded_successfully = False
+        hybrid_extractor = None
+else:
+    print("NLP модуль отключен (продакшен режим)")
 
 
 @require_http_methods(["POST"])
@@ -344,7 +401,7 @@ def extract_from_text_api(request):
         suggested_symptoms = []
         present_symptoms = [s for s in extracted if s["status"] == "present"]
 
-        if present_symptoms:
+        if present_symptoms and DEBUG and hybrid_extractor.semantic:
             all_symptom_names = get_ml_symptoms()
             found_names = set(s["canonical_name"] for s in present_symptoms)
 
