@@ -6,17 +6,23 @@ import json
 from typing import List, Dict, Any, Optional
 from transformers import AutoTokenizer, AutoModelForTokenClassification
 from .base import SymptomExtractor
-from django.db import connection
 
-# HuggingFace ID модели
-HF_MODEL_ID = "velto006/rubio-ner-finetuned-74"
+# Определяем режим работы по переменной окружения
+DEBUG = os.environ.get("DEBUG", "True") == "True"
+
+# Импортируем connection только если нужна БД (только для локальной разработки)
+if DEBUG:
+    from django.db import connection
 
 
 class RuBioRobertaNERExtractor(SymptomExtractor):
     """
     Экстрактор симптомов на основе дообученной RuBioRoBERTa.
     Обучен на 74 симптомах (только 3 класса: O, B-SYMP, I-SYMP).
-    Модель загружается с HuggingFace Hub при отсутствии локальной копии.
+    
+    ВНИМАНИЕ: Этот модуль используется ТОЛЬКО в режиме DEBUG=True (локально).
+    На Render (DEBUG=False) он не загружается через hybrid.py.
+    Модель загружается ТОЛЬКО из локальной папки, не скачивается с HuggingFace.
     """
     
     def __init__(self, model_path: Optional[str] = None, synonyms_path: Optional[str] = None):
@@ -28,25 +34,30 @@ class RuBioRobertaNERExtractor(SymptomExtractor):
         if synonyms_path is None:
             synonyms_path = os.path.join(current_dir, 'data', 'synonyms', 'synonyms_74.json')
         
-        # Определяем путь к модели
+        # Определяем путь к модели (ТОЛЬКО локально)
         if model_path is None:
-            local_path = os.path.join(current_dir, 'models', 'rubio_ner_finetuned_74')
+            local_path = os.path.join(current_dir, 'models', 'rubio_ner_finetuned_74', 'checkpoint-1431')
             
             # Проверяем наличие локальной модели
             if os.path.exists(os.path.join(local_path, 'model.safetensors')):
                 model_path = local_path
+                print(f"[NER] Загрузка локальной модели из {model_path}")
             else:
-                # Загружаем с HuggingFace
-                from huggingface_hub import snapshot_download
-                model_path = snapshot_download(
-                    repo_id=HF_MODEL_ID,
-                    local_dir=local_path,
-                    local_dir_use_symlinks=False,
-                    ignore_patterns=["*.pt", "optimizer-*.pt", "scheduler.pt", "rng_state.pth", "trainer_state.json"]
-                )
+                # Модель не найдена - NER не будет работать
+                print(f"[NER] Локальная модель не найдена в {local_path}. NER отключён.")
+                self.tokenizer = None
+                self.model = None
+                self.id2label = {}
+                self.label2id = {}
+                self.symptom_map = {}
+                self.synonyms_map = {}
+                return
         
+        print(f"[NER] Загрузка модели из {model_path}...", flush=True)
         self.tokenizer = AutoTokenizer.from_pretrained(model_path)
+        print("[NER] Токенизатор загружен", flush=True)
         self.model = AutoModelForTokenClassification.from_pretrained(model_path)
+        print("[NER] Модель загружена", flush=True)
         self.model.eval()
         
         self.id2label = self.model.config.id2label
@@ -56,8 +67,11 @@ class RuBioRobertaNERExtractor(SymptomExtractor):
         self.synonyms_map = self._load_synonyms(synonyms_path)
     
     def _load_symptom_map(self) -> Dict[str, int]:
-        """Загружает маппинг названий симптомов в их ID из БД."""
+        """Загружает маппинг названий симптомов в их ID из БД (только локально)."""
         symptom_map = {}
+        if not DEBUG:
+            return symptom_map
+        
         try:
             with connection.cursor() as cursor:
                 cursor.execute("SELECT id, name FROM diagnosis_symptom")
@@ -184,7 +198,7 @@ class RuBioRobertaNERExtractor(SymptomExtractor):
     
     def extract(self, text: str) -> List[Dict[str, Any]]:
         """Извлекает симптомы из текста."""
-        if not text:
+        if not text or self.model is None:
             return []
         
         inputs = self.tokenizer(
