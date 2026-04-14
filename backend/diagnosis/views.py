@@ -355,28 +355,29 @@ def get_severity_display(severity):
 hybrid_extractor = None
 nlp_loaded_successfully = False
 
-# Загружаем NLP только в режиме DEBUG или если явно указано
-if DEBUG:
-    try:
-        from ml.nlp.extractors.hybrid import HybridExtractor
+# Загружаем NLP всегда (на Render - rule-based, локально - все компоненты)
+try:
+    from ml.nlp.extractors.hybrid import HybridExtractor
 
-        hybrid_extractor = HybridExtractor(
-            semantic_threshold_common=0.85, semantic_threshold_rare=0.75, ner_confidence_threshold=0.75
-        )
+    hybrid_extractor = HybridExtractor(
+        semantic_threshold_common=0.85, semantic_threshold_rare=0.75, ner_confidence_threshold=0.75
+    )
 
+    # Прогрев только локально (на Render не нужно, чтобы не тратить время)
+    if DEBUG:
         warmup_phrases = ["болит голова", "кашель и температура", "тошнота, слабость, головокружение"]
         for phrase in warmup_phrases:
             hybrid_extractor.extract(phrase)
+        print("NLP модуль загружен (локальный режим, все компоненты)")
+    else:
+        print("NLP модуль загружен (продакшен режим, только rule-based)")
 
-        nlp_loaded_successfully = True
-        print("NLP модуль загружен (локальный режим)")
+    nlp_loaded_successfully = True
 
-    except Exception as e:
-        print(f"Ошибка загрузки NLP модуля: {e}")
-        nlp_loaded_successfully = False
-        hybrid_extractor = None
-else:
-    print("NLP модуль отключен (продакшен режим)")
+except Exception as e:
+    print(f"Ошибка загрузки NLP модуля: {e}")
+    nlp_loaded_successfully = False
+    hybrid_extractor = None
 
 
 @require_http_methods(["POST"])
@@ -401,6 +402,7 @@ def extract_from_text_api(request):
         suggested_symptoms = []
         present_symptoms = [s for s in extracted if s["status"] == "present"]
 
+        # Предполагаемые симптомы только в локальном режиме (есть семантика)
         if present_symptoms and DEBUG and hybrid_extractor.semantic:
             all_symptom_names = get_ml_symptoms()
             found_names = set(s["canonical_name"] for s in present_symptoms)
