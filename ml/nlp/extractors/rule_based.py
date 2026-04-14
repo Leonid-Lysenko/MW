@@ -4,8 +4,14 @@ import os
 import re
 from typing import List, Dict, Any, Optional, Set, Tuple
 from collections import defaultdict
-# from django.db import connection  # <-- ЗАКОММЕНТИРОВАНО для Render
 from .base import SymptomExtractor
+
+# Определяем режим работы по переменной окружения
+DEBUG = os.environ.get("DEBUG", "True") == "True"
+
+# Импортируем connection только если нужна БД
+if DEBUG:
+    from django.db import connection
 
 
 class RuleBasedExtractor(SymptomExtractor):
@@ -17,6 +23,9 @@ class RuleBasedExtractor(SymptomExtractor):
     
     Поддерживает множественное соответствие: один синоним может относиться
     к нескольким каноническим симптомам.
+    
+    В режиме DEBUG=True загружает симптомы из БД.
+    В режиме DEBUG=False (продакшен) загружает симптомы из JSON.
     """
     
     def __init__(self, synonyms_path: Optional[str] = None):
@@ -27,17 +36,20 @@ class RuleBasedExtractor(SymptomExtractor):
         self.symptom_dict: Dict[str, List[Tuple[str, int]]] = defaultdict(list)
         self.canonical_to_id: Dict[str, int] = {}
         
-        # ===== ДЛЯ RENDER (key-value) =====
-        # Загружаем синонимы из JSON и создаём ID
+        # Путь к файлу синонимов
         if synonyms_path is None:
             base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
             synonyms_path = os.path.join(base_dir, 'data', 'synonyms', 'synonyms_updated.json')
         
-        self._load_synonyms_from_json(synonyms_path)
-        
-        # ===== ДЛЯ ЛОКАЛЬНОЙ РАЗРАБОТКИ (БД) - ЗАКОММЕНТИРОВАНО =====
-        # self._load_symptoms_from_db()
-        # self._load_synonyms(synonyms_path)
+        if DEBUG:
+            # Локальная разработка: загружаем из БД
+            print("[RuleBasedExtractor] DEBUG mode: loading from database")
+            self._load_symptoms_from_db()
+            self._load_synonyms(synonyms_path)
+        else:
+            # Продакшен (Render): загружаем из JSON
+            print("[RuleBasedExtractor] PRODUCTION mode: loading from JSON")
+            self._load_synonyms_from_json(synonyms_path)
         
         # Сортируем ключи по убыванию длины для поиска самых длинных совпадений
         self.sorted_phrases = sorted(self.symptom_dict.keys(), key=len, reverse=True)
@@ -62,6 +74,51 @@ class RuleBasedExtractor(SymptomExtractor):
         # Союзы, которые разделяют части предложения
         self.clause_separators = ['но', 'а', 'однако', 'зато']
     
+    def _load_symptoms_from_db(self):
+        """Загружает канонические симптомы из БД (только для локальной разработки)."""
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT id, name FROM diagnosis_symptom")
+                rows = cursor.fetchall()
+                for symptom_id, name in rows:
+                    name_lower = name.lower()
+                    self.symptom_dict[name_lower].append((name, symptom_id))
+                    self.canonical_to_id[name] = symptom_id
+        except Exception as e:
+            print(f"Ошибка загрузки симптомов из БД: {e}")
+    
+    def _load_synonyms(self, synonyms_path: str):
+        """Загружает словарь синонимов из JSON и связывает с ID из БД (для локальной разработки)."""
+        try:
+            with open(synonyms_path, 'r', encoding='utf-8') as f:
+                synonyms_data = json.load(f)
+            
+            for canonical_name, synonyms in synonyms_data.items():
+                symptom_id = self.canonical_to_id.get(canonical_name)
+                if symptom_id is None:
+                    for name, sid in self.canonical_to_id.items():
+                        if name.lower() == canonical_name.lower():
+                            symptom_id = sid
+                            canonical_name = name
+                            break
+                    if symptom_id is None:
+                        print(f" Предупреждение: симптом '{canonical_name}' не найден в БД")
+                        continue
+                
+                for synonym in synonyms:
+                    if not synonym or not synonym.strip():
+                        continue
+                    
+                    synonym_clean = synonym.strip().lower()
+                    existing_pairs = self.symptom_dict[synonym_clean]
+                    if (canonical_name, symptom_id) not in existing_pairs:
+                        existing_pairs.append((canonical_name, symptom_id))
+                    
+        except FileNotFoundError:
+            print(f"Предупреждение: файл {synonyms_path} не найден")
+        except Exception as e:
+            print(f"Ошибка загрузки синонимов: {e}")
+    
     def _load_synonyms_from_json(self, synonyms_path: str):
         """Загружает словарь синонимов из JSON и создаёт ID симптомов (для Render)."""
         try:
@@ -83,51 +140,6 @@ class RuleBasedExtractor(SymptomExtractor):
                     
         except Exception as e:
             print(f"Ошибка загрузки синонимов: {e}")
-    
-    # ===== ДЛЯ ЛОКАЛЬНОЙ РАЗРАБОТКИ (БД) - ЗАКОММЕНТИРОВАНО =====
-    # def _load_symptoms_from_db(self):
-    #     """Загружает канонические симптомы из БД."""
-    #     try:
-    #         with connection.cursor() as cursor:
-    #             cursor.execute("SELECT id, name FROM diagnosis_symptom")
-    #             rows = cursor.fetchall()
-    #             for symptom_id, name in rows:
-    #                 name_lower = name.lower()
-    #                 self.symptom_dict[name_lower].append((name, symptom_id))
-    #                 self.canonical_to_id[name] = symptom_id
-    #     except Exception as e:
-    #         print(f"Ошибка загрузки симптомов из БД: {e}")
-    
-    # def _load_synonyms(self, synonyms_path: str):
-    #     """Загружает словарь синонимов из JSON."""
-    #     try:
-    #         with open(synonyms_path, 'r', encoding='utf-8') as f:
-    #             synonyms_data = json.load(f)
-    #         
-    #         for canonical_name, synonyms in synonyms_data.items():
-    #             symptom_id = self.canonical_to_id.get(canonical_name)
-    #             if symptom_id is None:
-    #                 for name, sid in self.canonical_to_id.items():
-    #                     if name.lower() == canonical_name.lower():
-    #                         symptom_id = sid
-    #                         canonical_name = name
-    #                         break
-    #                 if symptom_id is None:
-    #                     print(f" Предупреждение: симптом '{canonical_name}' не найден в БД")
-    #                     continue
-    #             
-    #             for synonym in synonyms:
-    #                 if not synonym or not synonym.strip():
-    #                     continue
-    #                 
-    #                 synonym_clean = synonym.strip().lower()
-    #                 existing_pairs = self.symptom_dict[synonym_clean]
-    #                 if (canonical_name, symptom_id) not in existing_pairs:
-    #                     existing_pairs.append((canonical_name, symptom_id))
-    #     except FileNotFoundError:
-    #         print(f"Предупреждение: файл {synonyms_path} не найден")
-    #     except Exception as e:
-    #         print(f"Ошибка загрузки синонимов: {e}")
     
     def _find_negation_positions(self, text: str) -> List[Dict]:
         """Находит все позиции слов отрицания в тексте."""
@@ -194,9 +206,6 @@ class RuleBasedExtractor(SymptomExtractor):
         Проверяет, относится ли отрицание к симптому.
         Учитывает запятые как разделители перечислений.
         """
-        text_lower = text.lower()
-        symptom_text = text[symptom_start:symptom_end].lower()
-        
         clause_start = symptom_start
         for i in range(symptom_start - 1, -1, -1):
             char = text[i]
