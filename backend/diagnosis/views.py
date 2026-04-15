@@ -355,29 +355,39 @@ def get_severity_display(severity):
 hybrid_extractor = None
 nlp_loaded_successfully = False
 
-# Загружаем NLP всегда (на Render - rule-based, локально - все компоненты)
-try:
-    from ml.nlp.extractors.hybrid import HybridExtractor
+if DEBUG:
+    # Локальная разработка: полный гибрид (NER + семантика + rule-based)
+    try:
+        from ml.nlp.extractors.hybrid import HybridExtractor
 
-    hybrid_extractor = HybridExtractor(
-        semantic_threshold_common=0.85, semantic_threshold_rare=0.75, ner_confidence_threshold=0.75
-    )
+        hybrid_extractor = HybridExtractor(
+            semantic_threshold_common=0.85, semantic_threshold_rare=0.75, ner_confidence_threshold=0.75
+        )
 
-    # Прогрев только локально (на Render не нужно, чтобы не тратить время)
-    if DEBUG:
         warmup_phrases = ["болит голова", "кашель и температура", "тошнота, слабость, головокружение"]
         for phrase in warmup_phrases:
             hybrid_extractor.extract(phrase)
-        print("NLP модуль загружен (локальный режим, все компоненты)")
-    else:
+
+        nlp_loaded_successfully = True
+        print("NLP модуль загружен (локальный режим, полный гибрид)")
+
+    except Exception as e:
+        print(f"Ошибка загрузки NLP модуля: {e}")
+        nlp_loaded_successfully = False
+        hybrid_extractor = None
+else:
+    # Продакшен (Render): только rule-based (лёгкий, без torch/transformers)
+    try:
+        from ml.nlp.extractors.rule_based import RuleBasedExtractor
+
+        hybrid_extractor = RuleBasedExtractor()
+        nlp_loaded_successfully = True
         print("NLP модуль загружен (продакшен режим, только rule-based)")
 
-    nlp_loaded_successfully = True
-
-except Exception as e:
-    print(f"Ошибка загрузки NLP модуля: {e}")
-    nlp_loaded_successfully = False
-    hybrid_extractor = None
+    except Exception as e:
+        print(f"Ошибка загрузки rule-based: {e}")
+        nlp_loaded_successfully = False
+        hybrid_extractor = None
 
 
 @require_http_methods(["POST"])
@@ -403,7 +413,7 @@ def extract_from_text_api(request):
         present_symptoms = [s for s in extracted if s["status"] == "present"]
 
         # Предполагаемые симптомы только в локальном режиме (есть семантика)
-        if present_symptoms and DEBUG and hybrid_extractor.semantic:
+        if present_symptoms and DEBUG and hasattr(hybrid_extractor, 'semantic') and hybrid_extractor.semantic:
             all_symptom_names = get_ml_symptoms()
             found_names = set(s["canonical_name"] for s in present_symptoms)
 
