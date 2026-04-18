@@ -51,6 +51,16 @@
         margin-top: 0 !important;
         padding-top: 80px !important;
     }
+    
+    .tech-badge {
+        display: inline-block;
+        padding: 6px 12px;
+        margin: 4px;
+        background: rgba(102, 126, 234, 0.1);
+        border-radius: 20px;
+        font-size: 0.85rem;
+        color: #667eea;
+    }
 </style>
 {% endblock %}
 
@@ -68,7 +78,7 @@
                             <i class="fas fa-heartbeat me-3"></i>
                             О нашем проекте
                         </h1>
-                        <p class="lead text-muted">Инновационные технологии для вашего здоровья</p>
+                        <p class="lead text-muted">Инновационные технологии искусственного интеллекта для вашего здоровья</p>
                     </div>
 
                     <!-- Основной контент страницы -->
@@ -79,9 +89,20 @@
                                 Искусственный интеллект в медицине
                             </h3>
                             <p class="mb-4">
-                                Наш проект использует технологии классического машинного обучения для помощи
-                                в предварительной диагностике заболеваний. Мы объединяем медицинские знания
-                                и современные алгоритмы для создания умного помощника.
+                                Наш проект использует технологии машинного обучения и обработки естественного языка 
+                                для помощи в предварительной диагностике заболеваний. Мы объединяем медицинские знания,
+                                современные алгоритмы и гибридные подходы для создания умного помощника, который понимает 
+                                естественный язык.
+                            </p>
+                            
+                            <h3 class="text-primary mb-4">
+                                <i class="fas fa-microphone-alt me-2"></i>
+                                Ввод симптомов естественным языком
+                            </h3>
+                            <p class="mb-4">
+                                Вы можете описать свои ощущения простыми словами, а система 
+                                автоматически извлечёт релевантные симптомы, обработает отрицания и предложит похожие 
+                                варианты.
                             </p>
                             
                             <h3 class="text-primary mb-4">
@@ -94,7 +115,7 @@
                                         <div class="feature-icon">
                                             <i class="fas fa-disease"></i>
                                         </div>
-                                        <h5>429</h5>
+                                        <h5>447</h5>
                                         <p class="text-muted">Заболеваний</p>
                                     </div>
                                 </div>
@@ -117,17 +138,27 @@
                             </h3>
                             <div class="mb-4">
                                 <h6>
-                                    <i class="fas fa-robot text-success me-2"></i>Машинное обучение
+                                    <i class="fas fa-chart-line text-info me-2"></i>Диагностическое ядро
                                 </h6>
-                                <p class="small text-muted">Logistic Regression с точностью 86%</p>
+                                <p class="small text-muted">Логистическая регрессия, F1-macro = 0.876</p>
+
+                                <h6>
+                                    <i class="fas fa-robot text-success me-2"></i>Гибридный NLP-модуль
+                                </h6>
+                                <p class="small text-muted">Rule-based + NER (RuBioRoBERTa) + семантический поиск (E5-large)</p>
                                 
                                 <h6>
-                                    <i class="fas fa-code text-info me-2"></i>Современный стек
+                                    <i class="fas fa-language text-warning me-2"></i>Обработка естественного языка
                                 </h6>
-                                <p class="small text-muted">Django, Python, Bootstrap 5</p>
+                                <p class="small text-muted">Поддержка русского языка, обработка опечаток и отрицаний</p>
                                 
                                 <h6>
-                                    <i class="fas fa-mobile-alt text-warning me-2"></i>Адаптивный дизайн
+                                    <i class="fas fa-code text-primary me-2"></i>Современный стек
+                                </h6>
+                                <p class="small text-muted">Django, PostgreSQL, PyTorch, HuggingFace Transformers</p>
+                                
+                                <h6>
+                                    <i class="fas fa-mobile-alt text-secondary me-2"></i>Адаптивный дизайн
                                 </h6>
                                 <p class="small text-muted">Работает на всех устройствах</p>
                             </div>
@@ -182,7 +213,7 @@
                         <div class="medical-card p-4">
                             <i class="fas fa-code-branch text-success fs-1 mb-3"></i>
                             <h5>Открытая разработка</h5>
-                            <p class="text-muted">Проект постоянно улучшается и дополняется новыми функциями</p>
+                            <p class="text-muted">Исходный код доступен на GitHub. Проект постоянно улучшается</p>
                         </div>
                     </div>
                     <div class="col-md-4 mb-4">

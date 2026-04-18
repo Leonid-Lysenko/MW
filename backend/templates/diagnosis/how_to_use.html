@@ -26,7 +26,7 @@
         animation: gradientShift 15s ease infinite;
         min-height: 100vh;
         margin-top: 0 !important;
-        padding-top: 80px !important; /* Отступ для фиксированной навигации */
+        padding-top: 80px !important;
     }
     
     .medical-card {
@@ -37,7 +37,6 @@
         border: 1px solid rgba(255, 255, 255, 0.2);
     }
     
-    /* Стили для иконок функций */
     .feature-icon {
         width: 80px;
         height: 80px;
@@ -51,7 +50,6 @@
         color: white;
     }
     
-    /* Стили для номеров шагов */
     .step-number {
         width: 40px;
         height: 40px;
@@ -65,7 +63,6 @@
         margin-right: 15px;
     }
     
-    /* Стили для информационных карточек */
     .tip-card {
         border-left: 4px solid #28a745;
         background: #f8fff9;
@@ -75,16 +72,25 @@
         border-left: 4px solid #dc3545;
         background: #fff5f5;
     }
+    
+    .nlp-badge {
+        display: inline-block;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        font-size: 0.7rem;
+        padding: 3px 8px;
+        border-radius: 20px;
+        margin-left: 10px;
+        vertical-align: middle;
+    }
 </style>
 {% endblock %}
 
 {% block content %}
-<!-- Анимированный фон с исправленными отступами -->
 <div class="animated-bg">
     <div class="container py-4">
         <div class="row justify-content-center">
             <div class="col-lg-10">
-                <!-- Основная карточка с инструкцией -->
                 <div class="medical-card p-4 p-md-5 mb-4">
                     <!-- Заголовок страницы -->
                     <div class="text-center mb-5">
@@ -92,113 +98,101 @@
                             <i class="fas fa-graduation-cap me-3"></i>
                             Как пользоваться диагностическим помощником
                         </h1>
-                        <p class="lead text-muted">Простое руководство для получения точных результатов</p>
+                        <p class="lead text-muted">Два способа ввода симптомов: свободный текст или выбор из списка</p>
                     </div>
 
-                    <!-- Важное предупреждение для пользователей -->
+                    <!-- Важное предупреждение -->
                     <div class="alert alert-warning mb-5">
                         <h4>
                             <i class="fas fa-exclamation-triangle me-2"></i>Важная информация
                         </h4>
                         <p class="mb-0">
-                            <strong>Это учебный проект!</strong> Данная система создана в образовательных целях
-                            и демонстрирует возможности технологий классического машинного обучения в медицине.
+                            <strong>Это учебный проект!</strong> Данная система создана в образовательных целях.
                             <strong>Не используйте результаты для самолечения!</strong> Всегда консультируйтесь
                             с квалифицированными медицинскими специалистами.
                         </p>
                     </div>
 
-                    <!-- Блок с пошаговой инструкцией -->
+                    <!-- ======================================== -->
+                    <!-- НОВЫЙ РАЗДЕЛ: ВВОД СИМПТОМОВ ЕСТЕСТВЕННЫМ ЯЗЫКОМ -->
+                    <!-- ======================================== -->
                     <div class="mb-5">
                         <h3 class="text-primary mb-4">
-                            <i class="fas fa-list-ol me-2"></i>
-                            Пошаговая инструкция
+                            <i class="fas fa-microphone-alt me-2"></i>
+                            Способ 1: Ввод симптомов текстом
+                            <span class="nlp-badge">Новая функция!</span>
                         </h3>
                         
                         <div class="row g-4">
-                            <!-- Шаг 1: Выбор симптомов -->
                             <div class="col-md-6">
                                 <div class="card h-100 border-0 shadow-sm">
                                     <div class="card-body">
                                         <div class="d-flex align-items-center mb-3">
                                             <div class="step-number">1</div>
-                                            <h5 class="mb-0">Выбор симптомов</h5>
+                                            <h5 class="mb-0">Опишите самочувствие</h5>
                                         </div>
                                         <p class="card-text">
-                                            Используйте поиск для быстрого нахождения симптомов.
-                                            <strong>Отмечайте все подходящие симптомы</strong> - чем больше,
-                                            тем точнее будет диагноз.
-                                            При этом убедитесь в <strong>осмысленности</strong>
-                                            выбора каждого симптома.
+                                            Введите текст в поле на главной странице. Пишите простыми словами,
+                                            как вы бы описали свои ощущения врачу.
                                         </p>
                                         <div class="tip-card p-3 mt-3">
                                             <small>
                                                 <i class="fas fa-lightbulb text-success me-2"></i>
-                                                <strong>Совет:</strong> Используйте поиск по ключевым словам
-                                                (например, "горло", "голова", "температура")
+                                                <strong>Пример:</strong> «болит голова и кашель, температуры нет»
                                             </small>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                             
-                            <!-- Шаг 2: Количество симптомов -->
                             <div class="col-md-6">
                                 <div class="card h-100 border-0 shadow-sm">
                                     <div class="card-body">
                                         <div class="d-flex align-items-center mb-3">
                                             <div class="step-number">2</div>
-                                            <h5 class="mb-0">Количество симптомов</h5>
+                                            <h5 class="mb-0">Распознать симптомы</h5>
                                         </div>
                                         <p class="card-text">
-                                            <strong>Старайтесь отметить 5-10+ симптомов</strong>.
-                                            Модель обучалась на данных, где для каждого заболевания
-                                            обычно указывалось много симптомов.
+                                            Нажмите кнопку <strong>«Распознать симптомы»</strong>. Система
+                                            автоматически извлечёт симптомы из текста и отметит их в списке.
                                         </p>
-                                        <div class="warning-card p-3 mt-3">
+                                        <div class="tip-card p-3 mt-3">
                                             <small>
-                                                <i class="fas fa-exclamation-circle text-danger me-2"></i>
-                                                <strong>Важно:</strong> Меньше 3 симптомов могут дать
-                                                неточные результаты
+                                                <i class="fas fa-lightbulb text-success me-2"></i>
+                                                <strong>Что умеет система:</strong> обрабатывает опечатки,
+                                                синонимы («тошнит» → «тошнота») и отрицания («кашля нет»)
                                             </small>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                             
-                            <!-- Шаг 3: Анализ результатов -->
                             <div class="col-md-6">
                                 <div class="card h-100 border-0 shadow-sm">
                                     <div class="card-body">
                                         <div class="d-flex align-items-center mb-3">
                                             <div class="step-number">3</div>
-                                            <h5 class="mb-0">Анализ результатов</h5>
+                                            <h5 class="mb-0">Проверьте и откорректируйте</h5>
                                         </div>
                                         <p class="card-text">
-                                            После анализа вы получите список из 5 наиболее вероятных
-                                            заболеваний с описаниями.
+                                            После распознавания вы увидите блок «Система распознала».
+                                            При необходимости вы можете удалить лишние симптомы или
+                                            добавить пропущенные вручную.
                                         </p>
-                                        <ul class="small text-muted mt-2">
-                                            <li>🔥 Высокая вероятность</li>
-                                            <li>⚠️ Средняя вероятность</li>
-                                            <li>💡 Низкая вероятность</li>
-                                        </ul>
                                     </div>
                                 </div>
                             </div>
                             
-                            <!-- Шаг 4: Детальная информация -->
                             <div class="col-md-6">
                                 <div class="card h-100 border-0 shadow-sm">
                                     <div class="card-body">
                                         <div class="d-flex align-items-center mb-3">
                                             <div class="step-number">4</div>
-                                            <h5 class="mb-0">Детальная информация</h5>
+                                            <h5 class="mb-0">Возможно, вы имели в виду</h5>
                                         </div>
                                         <p class="card-text">
-                                            Нажмите на любое заболевание для получения подробной
-                                            информации: описание, лечение, рекомендации и
-                                            карта с ближайшими медицинскими учреждениями.
+                                            Система предложит похожие симптомы, которые вы могли забыть указать.
+                                            Нажмите «Добавить», чтобы включить их в диагностику.
                                         </p>
                                     </div>
                                 </div>
@@ -206,109 +200,163 @@
                         </div>
                     </div>
 
-                    <!-- Блок с советами по точности диагностики -->
+                    <!-- ======================================== -->
+                    <!-- РАЗДЕЛ: РУЧНОЙ ВЫБОР СИМПТОМОВ -->
+                    <!-- ======================================== -->
                     <div class="mb-5">
                         <h3 class="text-primary mb-4">
-                            <i class="fas fa-bullseye me-2"></i>
-                            Советы для точной диагностики
+                            <i class="fas fa-check-square me-2"></i>
+                            Способ 2: Ручной выбор из списка
                         </h3>
                         
                         <div class="row g-4">
-                            <!-- Совет 1: Тщательный поиск -->
-                            <div class="col-md-4">
-                                <div class="text-center p-3">
-                                    <div class="feature-icon">
-                                        <i class="fas fa-search"></i>
+                            <div class="col-md-6">
+                                <div class="card h-100 border-0 shadow-sm">
+                                    <div class="card-body">
+                                        <div class="d-flex align-items-center mb-3">
+                                            <div class="step-number">1</div>
+                                            <h5 class="mb-0">Раскройте список симптомов</h5>
+                                        </div>
+                                        <p class="card-text">
+                                            Нажмите на заголовок <strong>«Полный список симптомов»</strong>,
+                                            чтобы развернуть полный перечень из 304 симптомов.
+                                        </p>
                                     </div>
-                                    <h5>Тщательный поиск</h5>
-                                    <p class="text-muted small">
-                                        Используйте разные формулировки симптомов.
-                                        Например: "головная боль", "мигрень", "боль в голове"
-                                    </p>
                                 </div>
                             </div>
                             
-                            <!-- Совет 2: Множество симптомов -->
-                            <div class="col-md-4">
-                                <div class="text-center p-3">
-                                    <div class="feature-icon">
-                                        <i class="fas fa-list"></i>
+                            <div class="col-md-6">
+                                <div class="card h-100 border-0 shadow-sm">
+                                    <div class="card-body">
+                                        <div class="d-flex align-items-center mb-3">
+                                            <div class="step-number">2</div>
+                                            <h5 class="mb-0">Найдите нужные симптомы</h5>
+                                        </div>
+                                        <p class="card-text">
+                                            Используйте поиск или алфавитную навигацию для быстрого
+                                            нахождения симптомов.
+                                        </p>
+                                        <div class="tip-card p-3 mt-3">
+                                            <small>
+                                                <i class="fas fa-lightbulb text-success me-2"></i>
+                                                <strong>Совет:</strong> Введите ключевое слово в поисковую строку
+                                                (например, «голов», «боль», «живот»)
+                                            </small>
+                                        </div>
                                     </div>
-                                    <h5>Множество симптомов</h5>
-                                    <p class="text-muted small">
-                                        Отмечайте все подходящие симптомы, даже если они кажутся
-                                        незначительными. Каждый симптом важен для AI.
-                                    </p>
                                 </div>
                             </div>
                             
-                            <!-- Совет 3: Повторный анализ -->
-                            <div class="col-md-4">
-                                <div class="text-center p-3">
-                                    <div class="feature-icon">
-                                        <i class="fas fa-sync-alt"></i>
+                            <div class="col-md-6">
+                                <div class="card h-100 border-0 shadow-sm">
+                                    <div class="card-body">
+                                        <div class="d-flex align-items-center mb-3">
+                                            <div class="step-number">3</div>
+                                            <h5 class="mb-0">Отметьте симптомы</h5>
+                                        </div>
+                                        <p class="card-text">
+                                            Ставьте галочки напротив всех симптомов, которые вас беспокоят.
+                                            Чем больше симптомов вы отметите, тем точнее будет результат.
+                                        </p>
                                     </div>
-                                    <h5>Повторный анализ</h5>
-                                    <p class="text-muted small">
-                                        Если результаты неточные, попробуйте добавить больше
-                                        симптомов или убрать неподходящие.
-                                    </p>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="card h-100 border-0 shadow-sm">
+                                    <div class="card-body">
+                                        <div class="d-flex align-items-center mb-3">
+                                            <div class="step-number">4</div>
+                                            <h5 class="mb-0">Следите за выбранными</h5>
+                                        </div>
+                                        <p class="card-text">
+                                            Выбранные симптомы отображаются в баннере. Вы можете очистить все
+                                            отметки кнопкой <strong>«Снять все отметки»</strong>.
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Блок с возможностями системы -->
+                    <!-- ======================================== -->
+                    <!-- ОБЩИЕ ШАГИ: ДИАГНОСТИКА -->
+                    <!-- ======================================== -->
                     <div class="mb-5">
                         <h3 class="text-primary mb-4">
-                            <i class="fas fa-cogs me-2"></i>
-                            Возможности системы
+                            <i class="fas fa-stethoscope me-2"></i>
+                            Получение результатов диагностики
                         </h3>
                         
-                        <div class="row">
+                        <div class="row g-4">
                             <div class="col-md-6">
-                                <!-- Функция 1: База знаний -->
-                                <div class="d-flex align-items-start mb-3">
-                                    <i class="fas fa-database text-primary fs-4 me-3 mt-1"></i>
-                                    <div>
-                                        <h6>Обширная база знаний</h6>
-                                        <p class="text-muted small mb-0">
-                                            429 заболеваний с подробными описаниями и рекомендациями по лечению
+                                <div class="card h-100 border-0 shadow-sm">
+                                    <div class="card-body">
+                                        <div class="d-flex align-items-center mb-3">
+                                            <div class="step-number">1</div>
+                                            <h5 class="mb-0">Анализировать симптомы</h5>
+                                        </div>
+                                        <p class="card-text">
+                                            После того как все симптомы отмечены, нажмите кнопку
+                                            <strong>«Анализировать выбранные симптомы»</strong>.
                                         </p>
+                                        <div class="warning-card p-3 mt-3">
+                                            <small>
+                                                <i class="fas fa-exclamation-circle text-danger me-2"></i>
+                                                <strong>Важно:</strong> Минимум 3 симптома рекомендуется для
+                                                получения точных результатов
+                                            </small>
+                                        </div>
                                     </div>
                                 </div>
-                                
-                                <!-- Функция 2: Карта медицинских учреждений -->
-                                <div class="d-flex align-items-start mb-3">
-                                    <i class="fas fa-map-marked-alt text-success fs-4 me-3 mt-1"></i>
-                                    <div>
-                                        <h6>Карта медицинских учреждений</h6>
-                                        <p class="text-muted small mb-0">
-                                            Автоматический поиск ближайших больниц, поликлиник и травмпунктов
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="card h-100 border-0 shadow-sm">
+                                    <div class="card-body">
+                                        <div class="d-flex align-items-center mb-3">
+                                            <div class="step-number">2</div>
+                                            <h5 class="mb-0">Изучите результаты</h5>
+                                        </div>
+                                        <p class="card-text">
+                                            Вы получите список из 5 наиболее вероятных заболеваний с указанием
+                                            вероятности в процентах.
+                                        </p>
+                                        <ul class="small text-muted mt-2">
+                                            <li>🔥 Высокая вероятность (>70%)</li>
+                                            <li>⚠️ Средняя вероятность (30-70%)</li>
+                                            <li>💡 Низкая вероятность (<30%)</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="card h-100 border-0 shadow-sm">
+                                    <div class="card-body">
+                                        <div class="d-flex align-items-center mb-3">
+                                            <div class="step-number">3</div>
+                                            <h5 class="mb-0">Детальная информация</h5>
+                                        </div>
+                                        <p class="card-text">
+                                            Нажмите на название любого заболевания, чтобы получить подробную
+                                            информацию: описание, лечение, симптомы, категорию и рекомендуемого
+                                            специалиста.
                                         </p>
                                     </div>
                                 </div>
                             </div>
                             
                             <div class="col-md-6">
-                                <!-- Функция 3: Печать результатов -->
-                                <div class="d-flex align-items-start mb-3">
-                                    <i class="fas fa-print text-info fs-4 me-3 mt-1"></i>
-                                    <div>
-                                        <h6>Печать результатов</h6>
-                                        <p class="text-muted small mb-0">
-                                            Сохраняйте результаты диагностики для консультации с врачом
-                                        </p>
-                                    </div>
-                                </div>
-                                
-                                <!-- Функция 4: Адаптивный дизайн -->
-                                <div class="d-flex align-items-start mb-3">
-                                    <i class="fas fa-mobile-alt text-warning fs-4 me-3 mt-1"></i>
-                                    <div>
-                                        <h6>Адаптивный дизайн</h6>
-                                        <p class="text-muted small mb-0">
-                                            Удобное использование на компьютерах, планшетах и смартфонах
+                                <div class="card h-100 border-0 shadow-sm">
+                                    <div class="card-body">
+                                        <div class="d-flex align-items-center mb-3">
+                                            <div class="step-number">4</div>
+                                            <h5 class="mb-0">База знаний</h5>
+                                        </div>
+                                        <p class="card-text">
+                                            Перейдите в раздел «База знаний», чтобы просмотреть все 447 заболеваний
+                                            с группировкой по алфавиту.
                                         </p>
                                     </div>
                                 </div>
@@ -316,22 +364,22 @@
                         </div>
                     </div>
 
-                    <!-- Техническая информация о ML-модели -->
-                    <div class="alert alert-info">
+                    <!-- Техническая информация о гибридной системе -->
+                    <div class="alert alert-info mb-5">
                         <h5>
-                            <i class="fas fa-robot me-2"></i>О модели машинного обучения
+                            <i class="fas fa-microchip me-2"></i>Как работает распознавание симптомов
                         </h5>
                         <p class="mb-2">
-                            Система использует алгоритм <strong>Logistic Regression</strong>, обученный на 240,000+
-                            медицинских случаях. Модель анализирует комбинации симптомов и определяет
-                            наиболее вероятные заболевания.
+                            Система использует <strong>гибридный подход</strong>, комбинирующий три метода:
                         </p>
-                        <p class="mb-0">
-                            <strong>Точность модели:</strong> 86%
-                        </p>
+                        <ul class="mb-2">
+                            <li><strong>Rule-based модуль</strong> — словарь из 2800+ синонимов и правила обработки отрицаний</li>
+                            <li><strong>Нейросетевая NER-модель</strong> — RuBioRoBERTa, обученная на 3630 фразах (F1 = 0.931)</li>
+                            <li><strong>Семантический поиск</strong> — модель E5-large для обработки опечаток и синонимов</li>
+                        </ul>
                     </div>
 
-                    <!-- Кнопки действий для навигации -->
+                    <!-- Кнопки действий -->
                     <div class="text-center mt-5">
                         <a href="{% url 'home' %}" class="btn btn-primary btn-lg px-5 py-3 me-3">
                             <i class="fas fa-stethoscope me-2"></i>
