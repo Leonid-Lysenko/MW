@@ -151,8 +151,8 @@ if "test" in sys.argv:
     PASSWORD_HASHERS = [
         "django.contrib.auth.hashers.MD5PasswordHasher",
     ]
-    DEBUG = False
-    TEMPLATE_DEBUG = False
+    # DEBUG = False
+    # TEMPLATE_DEBUG = False
 
     import logging
 
