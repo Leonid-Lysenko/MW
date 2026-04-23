@@ -1,6 +1,6 @@
 import json
-import time
 import os
+import time
 
 import joblib
 import numpy as np
@@ -46,8 +46,8 @@ if DEBUG:
 
 else:
     # Продакшен (Render): используем JSON
-    from .symptoms_data import SYMPTOMS_LIST
     from .disease_data import DISEASE_DATABASE
+    from .symptoms_data import SYMPTOMS_LIST
 
     def get_ml_symptoms():
         """Возвращает список симптомов из JSON-хранилища."""

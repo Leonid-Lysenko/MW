@@ -1,6 +1,7 @@
 from django.db import models
-from .symptoms_data import SYMPTOMS_LIST
+
 from .disease_data import DISEASE_DATABASE
+from .symptoms_data import SYMPTOMS_LIST
 
 
 class Disease(models.Model):
