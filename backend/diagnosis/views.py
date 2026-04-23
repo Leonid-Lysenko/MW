@@ -17,11 +17,11 @@ DEBUG = os.environ.get("DEBUG", "True") == "True"
 if DEBUG:
     # Локальная разработка: используем БД
     from .models import Disease, Symptom
-    
+
     def get_ml_symptoms():
         """Возвращает список симптомов из БД."""
         return list(Symptom.objects.all().order_by("id").values_list("name", flat=True))
-    
+
     def get_disease_info_from_db(disease_name):
         """Возвращает информацию о заболевании из БД."""
         try:
@@ -43,15 +43,16 @@ if DEBUG:
                 "specialist": "Терапевт",
                 "category": "Уточняется",
             }
+
 else:
     # Продакшен (Render): используем JSON
     from .symptoms_data import SYMPTOMS_LIST
     from .disease_data import DISEASE_DATABASE
-    
+
     def get_ml_symptoms():
         """Возвращает список симптомов из JSON-хранилища."""
         return SYMPTOMS_LIST
-    
+
     def get_disease_info_from_db(disease_name):
         """Возвращает информацию о заболевании из JSON-хранилища."""
         disease_name_lower = disease_name.lower()
@@ -65,7 +66,7 @@ else:
                     "specialist": info["specialist"],
                     "category": info["category"],
                 }
-        
+
         return {
             "description": f"Информация о заболевании '{disease_name}' готовится нашими специалистами. Обратитесь к врачу для точной диагностики и лечения.",
             "treatment": "Для назначения лечения обратитесь к квалифицированному медицинскому специалисту. Не занимайтесь самолечением.",
@@ -413,7 +414,7 @@ def extract_from_text_api(request):
         present_symptoms = [s for s in extracted if s["status"] == "present"]
 
         # Предполагаемые симптомы только в локальном режиме (есть семантика)
-        if present_symptoms and DEBUG and hasattr(hybrid_extractor, 'semantic') and hybrid_extractor.semantic:
+        if present_symptoms and DEBUG and hasattr(hybrid_extractor, "semantic") and hybrid_extractor.semantic:
             all_symptom_names = get_ml_symptoms()
             found_names = set(s["canonical_name"] for s in present_symptoms)
 

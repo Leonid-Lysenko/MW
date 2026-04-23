@@ -12,6 +12,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 env_path = BASE_DIR / ".env"
 if env_path.exists():
     from dotenv import load_dotenv
+
     load_dotenv(env_path)
 
 # Определяем окружение
@@ -30,12 +31,17 @@ SECRET_KEY = os.environ.get("SECRET_KEY")
 if not SECRET_KEY:
     if DEBUG:
         from django.core.management.utils import get_random_secret_key
+
         SECRET_KEY = get_random_secret_key()
-        print("Warning: Using temporary SECRET_KEY for development. Set SECRET_KEY environment variable for production.")
+        print(
+            "Warning: Using temporary SECRET_KEY for development. Set SECRET_KEY environment variable for production."
+        )
     else:
         raise ValueError("SECRET_KEY environment variable must be set in production")
 
-ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "localhost,127.0.0.1,medical-diagnosis-advanced.onrender.com").split(",")
+ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "localhost,127.0.0.1,medical-diagnosis-advanced.onrender.com").split(
+    ","
+)
 
 
 # Application definition
@@ -149,6 +155,7 @@ if "test" in sys.argv:
     TEMPLATE_DEBUG = False
 
     import logging
+
     logging.disable(logging.CRITICAL)
 
     ML_MODEL_PATH = BASE_DIR / "diagnosis/tests/test_data/test_model.joblib"
