@@ -64,7 +64,7 @@ jobs:
         DB_HOST: localhost
         DB_PORT: 5432
         SECRET_KEY: test-secret-key-for-ci
-        DEBUG: False
+        DEBUG: True
       run: |
         cd backend
         pytest -m "not e2e" --no-cov
