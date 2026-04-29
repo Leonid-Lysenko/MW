@@ -8,6 +8,10 @@ pip install --upgrade pip
 pip install -r backend/requirements.txt
 pip install huggingface-hub
 
+# Collect static files
+echo "Collecting static files..."
+python backend/manage.py collectstatic --noinput
+
 # Preload E5-small model - DISABLED
 # echo "Preloading E5-small model..."
 # python -c "
