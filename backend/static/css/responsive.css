@@ -494,3 +494,77 @@ h1:first-child,
         font-size: 0.9em !important;
     }
 }
+
+/* ======================================== */
+/* АДАПТАЦИЯ КНОПОК ДЛЯ ПЛАНШЕТОВ И ТЕЛЕФОНОВ */
+/* ======================================== */
+
+/* Планшеты (горизонтальная ориентация): две кнопки в строку, третья под ними */
+@media (min-width: 577px) and (max-width: 768px) {
+    .google-search-container .text-center {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        justify-content: center !important;
+        align-items: center !important;
+        gap: 12px !important;
+    }
+    
+    .google-search-container .text-center .btn {
+        width: auto !important;
+        margin: 0 !important;
+    }
+    
+    /* Третья кнопка на новой строке */
+    #clearSelectedBtn {
+        flex-basis: 100% !important;
+        margin-top: 5px !important;
+    }
+}
+
+/* Телефоны (до 576px): все три кнопки вертикально */
+@media (max-width: 576px) {
+    .google-search-container .text-center {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        gap: 12px !important;
+    }
+    
+    .google-search-container .text-center .btn {
+        width: 100% !important;
+        max-width: 260px !important;
+        margin: 0 !important;
+    }
+    
+    .google-search-container .text-center .ms-2 {
+        margin-left: 0 !important;
+    }
+}
+
+/* Планшеты (ширина от 768px до 1024px) */
+@media (min-width: 768px) and (max-width: 1024px) {
+    .google-search-container .text-center {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        justify-content: center !important;
+        gap: 10px !important;
+    }
+    
+    .google-search-container .text-center .btn {
+        width: auto !important;
+        min-width: 180px !important;
+        margin: 0 !important;
+    }
+    
+    /* Третья кнопка — такого же размера, как и остальные */
+    #clearSelectedBtn {
+        flex-basis: auto !important;
+        width: auto !important;
+        min-width: 200px !important;
+        margin-top: 10px !important;
+    }
+    
+    .google-search-container .text-center .ms-2 {
+        margin-left: 0 !important;
+    }
+}
